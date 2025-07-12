@@ -15,8 +15,25 @@ ob_start();
             <!-- Modal Header -->
             <div class="modal-header">
                 <h2 id="buscar-libro-title" class="d-none">Buscar Libro</h2>
-                <h2 id="buscar-estudiante-title" class="d-none">Buscar Estudiante</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h2 id="buscar-cliente-title" class="d-none">B    function selectCliente(cedula) {
+        var $nombrecliente = document.getElementById('nombrecliente')
+        var $cedula = document.getElementById('cedula')
+        var $feedback = document.getElementById('cedula-feedback').innerText = ''
+
+        $.ajax({
+            type: "POST",
+            url: "../ajax/cliente.php?op=mostrar",
+            data: {
+                cedula
+            },
+            success: function(response) {
+                var resultado = JSON.parse(response);
+                $nombrecliente.value = resultado.nombre;
+                $cedula.value = resultado.cedula;
+                $('#prestamo-modal').modal('hide')
+            }
+        });
+    }                    <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
 
             <!-- Modal body -->
@@ -43,8 +60,8 @@ ob_start();
                     </table>
                 </div>
 
-                <div class="row table-responsive pl-3 d-none" id="listaEstudiantes">
-                    <table id="tbllistadoEstudiantes" class="table table-striped table-bordered table-condensed table-hover">
+                <div class="row table-responsive pl-3 d-none" id="listaClientes">
+                    <table id="tbllistadoClientes" class="table table-striped table-bordered table-condensed table-hover">
                         <thead>
                             <th>Cédula</th>
                             <th>Nombre</th>
@@ -81,19 +98,19 @@ ob_start();
             <label for="cedula">Cedula:</label>
             <div class="d-flex flex-row justify-content-between">
                 <div class="pr-md-2">
-                    <input class="form-control" type="text" id="cedula" name="cedula" onblur="buscarEstudiante()">
+                    <input class="form-control" type="text" id="cedula" name="cedula" onblur="buscarCliente()">
                     <small class="text-danger" id="cedula-feedback"></small>
                 </div>
 
                 <div class="">
-                    <button class="float-right btn btn-secondary" id="listar-estudiantes" onclick="listarEstudiantes()">Buscar</button>
+                    <button class="float-right btn btn-secondary" id="listar-clientes" onclick="listarClientes()">Buscar</button>
                 </div>
             </div>
         </div>
         <div class="col-sm-3">
-            <label for="nombreestudiante">Nombre:</label>
-            <input type="text" class="form-control" id="nombreestudiante" />
-            <small id="nombreestudiante-feedback" class="text-danger"></small>
+            <label for="nombrecliente">Nombre:</label>
+            <input type="text" class="form-control" id="nombrecliente" />
+            <small id="nombrecliente-feedback" class="text-danger"></small>
         </div>
         <div class="col-sm-3">
             <label for="fechaboleta">Fecha:</label>
@@ -231,18 +248,18 @@ include './includes/layout.php';
     function guardarDatos() {
         // Obtener los datos del DataTable y convertirlos en un objeto JSON
         var cedula = $("#cedula").val();
-        var nombreestudiante = $("#nombreestudiante").val();
+        var nombrecliente = $("#nombrecliente").val();
         var fecha = $("#fechaboleta").val();
         var detalle = tabla.rows().data().toArray();
 
-        if (cedula == "" || nombreestudiante == "" || fecha == "" || detalle.length == 0) {
+        if (cedula == "" || nombrecliente == "" || fecha == "" || detalle.length == 0) {
             Swal.fire('Faltan Datos');
             return
         }
 
         var encabezado = {
             "cedula": cedula,
-            "nombre": nombreestudiante,
+            "nombre": nombrecliente,
             "fecha": fecha
         }
 
@@ -261,7 +278,7 @@ include './includes/layout.php';
                 tabla.clear().draw();
                 //Mostramos los valores en las cajas de texto
                 $('#cedula').val('');
-                $('#nombreestudiante').val('');
+                $('#nombrecliente').val('');
                 $('#fechaboleta').val('');
             }
         });
@@ -308,7 +325,7 @@ include './includes/layout.php';
             success: function(response) {
                 var resultado = JSON.parse(response);
                 document.getElementById("fechaLibro").value = resultado['fechaLibro'];
-                document.getElementById("fechaEstudiante").value = resultado['fechaEstudiante'];
+                document.getElementById("fechaCliente").value = resultado['fechaCliente'];
                 document.getElementById("codigo").value = resultado['codigo'];
                 document.getElementById("cedula").value = resultado['cedula'];
                 document.getElementById("prestamoId").value = resultado['idprestamo'];
@@ -323,10 +340,10 @@ include './includes/layout.php';
     function listarLibros() {
         $("#btn-eliminar").addClass('d-none');
         $('#delete-message').hide()
-        $('#buscar-estudiante-title').addClass('d-none')
+        $('#buscar-cliente-title').addClass('d-none')
         $('#buscar-libro-title').removeClass('d-none')
         $('#listaLibros').removeClass('d-none')
-        $('#listaEstudiantes').addClass('d-none')
+        $('#listaClientes').addClass('d-none')
 
 
         $('#tbllistadoLibros').dataTable({
@@ -375,14 +392,12 @@ include './includes/layout.php';
                 $nombre.value = resultado.titulo;
             }
         });
-    }
-
-    function buscarEstudiante() {
+    }    function buscarCliente() {
         var cedula = document.getElementById('cedula').value
-        var $nombreestudiante = document.getElementById('nombreestudiante')
+        var $nombrecliente = document.getElementById('nombrecliente')
         var $feedback = document.getElementById('cedula-feedback')
 
-        $nombreestudiante.value = ''
+        $nombrecliente.value = ''
 
         if (cedula == "") {
             $feedback.innerText = ''
@@ -391,32 +406,31 @@ include './includes/layout.php';
 
         $.ajax({
             type: "POST",
-            url: "../ajax/estudiante.php?op=buscar",
+            url: "../ajax/cliente.php?op=buscar",
             data: {
                 cedula
             },
             success: function(response) {
                 var resultado = JSON.parse(response);
-
                 if (resultado == null) {
-                    $feedback.innerText = 'Estudiante no existe'
+                    $feedback.innerText = 'Cliente no existe'
                 } else {
-                    $nombreestudiante.value = resultado.nombre;
+                    $nombrecliente.value = resultado.nombre;
                     $feedback.innerText = ''
                 }
             }
         });
     }
 
-    // Listar Estudiantes
-    function listarEstudiantes() {
+    // Listar Clientes
+    function listarClientes() {
         $("#btn-eliminar").addClass('d-none');
         $('#delete-message').hide()
-        $('#buscar-estudiante-title').removeClass('d-none')
+        $('#buscar-cliente-title').removeClass('d-none')
         $('#buscar-libro-title').addClass('d-none')
         document.getElementById("listaLibros").classList.add("d-none");
 
-        $('#tbllistadoEstudiantes').dataTable({
+        $('#tbllistadoClientes').dataTable({
             "aProcessing": true, //Activamos el procesamiento del datatables
             "aServerSide": true, //Paginación y filtrado realizados por el servidor
             dom: 'Bfrtip', //Definimos los elementos del control de tabla
@@ -427,7 +441,7 @@ include './includes/layout.php';
                 'pdf'
             ],
             "ajax": {
-                url: "../ajax/estudiante.php?op=listar",
+                url: "../ajax/cliente.php?op=listar",
                 type: "get",
                 dataType: "json",
                 error: function(e) {
@@ -441,7 +455,7 @@ include './includes/layout.php';
             ] //Ordenar (columna,orden)
         }).DataTable();
 
-        $('#listaEstudiantes').removeClass('d-none')
+        $('#listaClientes').removeClass('d-none')
         $('#prestamo-modal').modal('show')
     }
 

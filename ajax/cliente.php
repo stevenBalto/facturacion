@@ -11,8 +11,8 @@ $direccion = isset($_POST["direccion"]) ? limpiarCadena($_POST["direccion"]) : "
 
 switch ($_GET["op"]) {
     case 'guardar':
-        if(empty($cedula) || empty($nombre)) {
-            echo "La cédula y el nombre del cliente son requeridos";
+        if(empty($cedula) || empty($nombre) || empty($telefono) || empty($direccion)) {
+            echo "Todos los campos son requeridos (cédula, nombre, teléfono y dirección)";
         } else {
             $rspta = $cliente->insertar($cedula, $nombre, $telefono, $direccion);
             if ($rspta) {
@@ -24,8 +24,8 @@ switch ($_GET["op"]) {
         break;
 
     case 'editar':
-        if(empty($cedula) || empty($nombre)) {
-            echo "La cédula y el nombre del cliente son requeridos";
+        if(empty($cedula) || empty($nombre) || empty($telefono) || empty($direccion)) {
+            echo "Todos los campos son requeridos (cédula, nombre, teléfono y dirección)";
         } else {
             $rspta = $cliente->editar($cedula, $nombre, $telefono, $direccion);
             echo $rspta ? "Cliente actualizado correctamente" : "No se pudo actualizar el cliente";
@@ -58,7 +58,7 @@ switch ($_GET["op"]) {
                     "1" => $reg->nombre,
                     "2" => $reg->telefono,
                     "3" => $reg->direccion,
-                    "4" => '<button class="btn btn-warning btn-sm" onclick="editar(\'' . $reg->cedula . '\')"><i class="bx bx-pencil"></i>&nbsp;Editar</button> <button class="btn btn-danger btn-sm ml-1" onclick="showModal(\'' . $reg->cedula . '\')"><i class="bx bx-trash"></i>&nbsp;Eliminar</button>'
+                    "4" => '<button class="btn btn-warning btn-sm" onclick="editar(\'' . $reg->cedula . '\')"><i class="bx bx-pencil"></i>&nbsp;Editar</button> <button class="btn btn-danger btn-sm ml-1" onclick="showModal(\'' . $reg->cedula . '\')"><i class="bx bx-trash"></i>&nbsp;Eliminar</button> <button class="btn btn-info btn-sm ml-1" onclick="verFacturas(\'' . $reg->cedula . '\', \'' . $reg->nombre . '\')"><i class="bx bx-receipt"></i>&nbsp;Facturas</button>'
                 );
             }
         }

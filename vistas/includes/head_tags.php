@@ -19,3 +19,13 @@
 
 <!-- Custom styles -->
 <link rel="stylesheet" href="../public/css/style.css">
+
+<?php if (isset($title) && $title == 'Cliente'): ?>
+<!-- CSS específico para la vista de cliente -->
+<link rel="stylesheet" href="../public/css/cliente.css">
+<?php endif; ?>
+
+<?php if (isset($title) && $title == 'Factura'): ?>
+<!-- CSS específico para la vista de factura -->
+<link rel="stylesheet" href="../public/css/factura.css">
+<?php endif; ?>

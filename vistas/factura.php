@@ -143,18 +143,20 @@ ob_start();
         <table id="tabla" class="table">
             <thead>
                 <tr>
+                    <th>ID Factura</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
                     <th>ID Producto</th>
-                    <th>Nombre</th>
+                    <th>Nombre Producto</th>
                     <th>Cantidad</th>
                     <th>Precio Unitario</th>
                     <th>Subtotal</th>
-                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
                 <tr>
-                    <td colspan="6" class="m-0 px-0 py-2">
+                    <td colspan="8" class="m-0 px-0 py-2">
                         <hr>
                         <button onclick="guardarDatos()" class="btn btn-primary"><i class="fa fa-save"></i> Guardar</button>
                     </td>
@@ -175,13 +177,37 @@ include './includes/layout.php';
     var tabla;
 
     $(document).ready(function() {
-        // Crear el DataTable con columnas adicionales para los botones de eliminar y editar
+        // Crear el DataTable que muestra todos los detalles de facturas existentes
         tabla = $('#tabla').DataTable({
-            "columnDefs": [{
-                "targets": -1,
-                "data": null,
-                "defaultContent": "<button class='btn btn-sm btn-warning' onclick='editarFila(this)'>Editar</button> <button onclick='eliminarFila(this)' class='btn btn-sm btn-danger'>Eliminar</button>"
-            }]
+            "processing": true,
+            "serverSide": true,
+            "lengthChange": false,
+            "searching": true,
+            "ajax": {
+                url: "../ajax/factura.php?op=listar_detalles",
+                type: "get",
+                dataType: "json",
+                error: function(e) {
+                    console.log(e.responseText);
+                }
+            },
+            "destroy": true,
+            "iDisplayLength": 10,
+            "order": [[0, "desc"]],
+            "language": {
+                "emptyTable": "No hay detalles de facturas registrados",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ detalles",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "zeroRecords": "No se encontraron detalles",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            }
         });
 
         // Calcular subtotal cuando cambie cantidad o precio

@@ -1,0 +1,78 @@
+/* Estilos para la vista de factura */
+
+/* Ocultar controles del DataTable de productos */
+#tbllistadoProductos_length {
+    display: none !important;
+}
+
+#tbllistadoProductos_filter {
+    display: none !important;
+}
+
+/* Ocultar controles del DataTable de clientes */
+#tbllistadoClientes_length {
+    display: none !important;
+}
+
+#tbllistadoClientes_filter {
+    display: none !important;
+}
+
+/* Ocultar controles del DataTable principal de detalles - Solo length, mantener search */
+#tabla_length {
+    display: none !important;
+}
+
+/* Mejorar la presentación de la tabla de detalles */
+#tabla thead th {
+    background-color: #e9ecef;
+    font-weight: 600;
+    border-top: none;
+}
+
+#tabla tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Estilos para los campos de producto */
+.input-producto {
+    margin-bottom: 10px;
+}
+
+/* Mejorar el espaciado del formulario */
+.form-control {
+    margin-bottom: 5px;
+}
+
+/* Estilo para la sección de datos */
+#listaDatos {
+    margin-top: 20px;
+    padding-top: 20px;
+}
+
+#listaDatos h2 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* Mejorar botones */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Estilos para modales */
+.modal-lg {
+    max-width: 900px;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: #495057;
+}

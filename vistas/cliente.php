@@ -3,16 +3,6 @@ $title = 'Cliente';
 ob_start();
 ?>
 
-<style>
-    #listadoregistros {
-        display: none;
-    }
-    
-    #tbllistado_length {
-        display: none !important;
-    }
-</style>
-
 <!-- Cliente Modal -->
 <div class="modal" id="cli-modal">
     <div class="modal-dialog">
@@ -40,6 +30,36 @@ ob_start();
 </div>
 <!-- Cliente Modal End -->
 
+<!-- Modal para ver facturas -->
+<div class="modal fade" id="facturas-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="facturas-modal-title">Facturas del Cliente</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table id="tblFacturas" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID Factura</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <h1 class="display-4"><?= $title ?></h1>
 
 <div class="mb-3 card p-3 d-none" id="top-form">
@@ -55,13 +75,13 @@ ob_start();
             <small class="form-text text-muted">Ingrese el nombre del cliente</small>
         </div>
         <div class="col-sm-3">
-            <label for="telefono">Teléfono:</label>
-            <input class="form-control" type="text" id="telefono" name="telefono" maxlength="20">
+            <label for="telefono">Teléfono <span class="text-danger">*</span>:</label>
+            <input class="form-control" type="text" id="telefono" name="telefono" maxlength="20" required>
             <small class="form-text text-muted">Ingrese el teléfono del cliente</small>
         </div>
         <div class="col-sm-3">
-            <label for="direccion">Dirección:</label>
-            <input class="form-control" type="text" id="direccion" name="direccion" maxlength="200">
+            <label for="direccion">Dirección <span class="text-danger">*</span>:</label>
+            <input class="form-control" type="text" id="direccion" name="direccion" maxlength="200" required>
             <small class="form-text text-muted">Ingrese la dirección del cliente</small>
         </div>
         <input type="hidden" id="nuevo">
@@ -107,10 +127,13 @@ include './includes/layout.php';
     listar();
 
     // Validación en tiempo real
-    $("#cedula, #nombre").on('input', function() {
+    $("#cedula, #nombre, #telefono, #direccion").on('input', function() {
         var cedula = $("#cedula").val().trim();
         var nombre = $("#nombre").val().trim();
-        if(cedula.length > 0 && nombre.length > 0) {
+        var telefono = $("#telefono").val().trim();
+        var direccion = $("#direccion").val().trim();
+        
+        if(cedula.length > 0 && nombre.length > 0 && telefono.length > 0 && direccion.length > 0) {
             $("#Guardar").prop('disabled', false);
         } else {
             $("#Guardar").prop('disabled', true);
@@ -204,10 +227,10 @@ include './includes/layout.php';
         //Si nuevo es 1 Guarda si es 0 Edita
         var url = nuevo == 1 ? "../ajax/cliente.php?op=guardar" : "../ajax/cliente.php?op=editar";
 
-        if (cedula.trim() == '' || nombre.trim() == '') {
+        if (cedula.trim() == '' || nombre.trim() == '' || telefono.trim() == '' || direccion.trim() == '') {
             Swal.fire({
                 title: 'Error',
-                text: 'La cédula y el nombre del cliente son requeridos',
+                text: 'Todos los campos son requeridos (cédula, nombre, teléfono y dirección)',
                 icon: 'warning',
                 confirmButtonText: 'OK'
             });
@@ -343,6 +366,50 @@ include './includes/layout.php';
                 [0, "asc"]
             ] //Ordenar (columna,orden)
         }).DataTable();
+    }
+
+    // Función para ver facturas de un cliente
+    function verFacturas(cedula, nombreCliente) {
+        $('#facturas-modal-title').text('Facturas de: ' + nombreCliente);
+        
+        // Destruir DataTable si existe
+        if ($.fn.DataTable.isDataTable('#tblFacturas')) {
+            $('#tblFacturas').DataTable().destroy();
+        }
+        
+        // Crear nuevo DataTable para facturas
+        $('#tblFacturas').DataTable({
+            "processing": true,
+            "lengthChange": false,
+            "searching": false,
+            "ajax": {
+                url: "../ajax/factura.php?op=listar_por_cliente",
+                type: "POST",
+                data: { cedula: cedula },
+                dataType: "json",
+                error: function(e) {
+                    console.log(e.responseText);
+                }
+            },
+            "destroy": true,
+            "iDisplayLength": 5,
+            "order": [[0, "desc"]],
+            "language": {
+                "emptyTable": "No se encontraron facturas para este cliente",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ facturas",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "zeroRecords": "No se encontraron facturas",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            }
+        });
+        
+        $('#facturas-modal').modal('show');
     }
 </script>
 </body>

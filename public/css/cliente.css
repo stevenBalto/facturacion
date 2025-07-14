@@ -1,0 +1,65 @@
+/* Estilos para la vista de cliente */
+
+/* Ocultar listado de registros por defecto */
+#listadoregistros {
+    display: none;
+}
+
+/* Ocultar controles del DataTable principal de clientes */
+#tbllistado_length {
+    display: none !important;
+}
+
+/* Ocultar controles del DataTable de facturas */
+#tblFacturas_length {
+    display: none !important;
+}
+
+#tblFacturas_filter {
+    display: none !important;
+}
+
+/* Ocultar controles genéricos de DataTables */
+.dataTables_length {
+    display: none !important;
+}
+
+.dataTables_filter {
+    display: none !important;
+}
+
+/* Estilos adicionales para mejor presentación */
+.modal-lg {
+    max-width: 900px;
+}
+
+.table-responsive {
+    border-radius: 0.25rem;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Mejoras visuales para los modales */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Estilos para la tabla de facturas */
+#tblFacturas thead th {
+    background-color: #e9ecef;
+    font-weight: 600;
+    border-top: none;
+}
+
+#tblFacturas tbody tr:hover {
+    background-color: #f8f9fa;
+}

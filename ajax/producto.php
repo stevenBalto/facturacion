@@ -46,9 +46,13 @@ switch ($_GET["op"]) {
         break;
 
     case 'buscar_categoria':
-    $rspta = $producto->buscar_categoria($_POST["idCategoria"]);
-    echo json_encode($rspta->fetch_assoc());
-    break;
+        $rspta = $producto->buscar_categoria($_POST["idCategoria"]);
+        if ($rspta && $rspta->num_rows > 0) {
+            echo json_encode($rspta->fetch_assoc());
+        } else {
+            echo json_encode(null);
+        }
+        break;
 
 
 

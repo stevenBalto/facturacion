@@ -155,6 +155,8 @@ include './includes/layout.php';
         $("#nombre").val("")
         $("#precio").val("")
         $("#idCategoria").val("")
+        $("#categoria").val("")
+        $("#id-categoria-feedback").text("")
         $("#nuevo").val(1)
     }
 
@@ -258,6 +260,7 @@ include './includes/layout.php';
         document.getElementById("precio").value = "";
         document.getElementById("idCategoria").value = "";
         document.getElementById("categoria").value = "";
+        document.getElementById("id-categoria-feedback").innerText = "";
     }
 
     function listar() {
@@ -329,20 +332,32 @@ include './includes/layout.php';
     }
 
 function selectCategoria(id) {
-    var $idCategoria = document.getElementById('idCategoria');
-    var $categoria = document.getElementById('categoria');
-    var $feedback = document.getElementById('cod-categoria-feedback');
+    var idCategoriaField = document.getElementById('idCategoria');
+    var categoriaField = document.getElementById('categoria');
+    var feedbackField = document.getElementById('id-categoria-feedback');
 
     $.ajax({
         type: "POST",
         url: "../ajax/producto.php?op=buscar_categoria",
         data: { idCategoria: id },
         success: function(response) {
-            var resultado = JSON.parse(response);
-            $categoria.value = resultado.nombre;
-            $idCategoria.value = resultado.id;
-            $('#producto-modal').modal('hide');
-            $feedback.innerText = '';
+            try {
+                var resultado = JSON.parse(response);
+                
+                if (resultado && resultado.id && resultado.nombre) {
+                    categoriaField.value = resultado.nombre;
+                    idCategoriaField.value = resultado.id;
+                    $('#producto-modal').modal('hide');
+                    if (feedbackField) feedbackField.innerText = '';
+                } else {
+                    if (feedbackField) feedbackField.innerText = 'Error al seleccionar categoría';
+                }
+            } catch (e) {
+                if (feedbackField) feedbackField.innerText = 'Error al procesar la respuesta';
+            }
+        },
+        error: function(xhr, status, error) {
+            if (feedbackField) feedbackField.innerText = 'Error de conexión';
         }
     });
 }
@@ -354,33 +369,46 @@ function selectCategoria(id) {
 
 
  function buscarCategoria() {
-    var idCategoria = document.getElementById('idCategoria');
-    var $categoria = document.getElementById('categoria');
-    var $feedback = document.getElementById('id-categoria-feedback');
+    var idCategoriaField = document.getElementById('idCategoria');
+    var categoriaField = document.getElementById('categoria');
+    var feedbackField = document.getElementById('id-categoria-feedback');
 
-    $categoria.value = '';
-    $feedback.innerText = '';
+    // Si el campo está vacío, limpiar y salir
+    if (!idCategoriaField.value.trim()) {
+        categoriaField.value = '';
+        if (feedbackField) feedbackField.innerText = '';
+        return;
+    }
+
+    categoriaField.value = '';
+    if (feedbackField) feedbackField.innerText = '';
 
     $.ajax({
         type: "POST",
         url: "../ajax/categoria.php?op=mostrar",
         data: {
-            id: idCategoria.value
+            id: idCategoriaField.value.trim()
         },
         success: function(response) {
-            console.log("Respuesta del servidor:", response);
-            var resultado = JSON.parse(response);
-
-            if (!resultado || resultado == null) {
-                $feedback.innerText = 'Categoría no existe';
-            } else {
-                $categoria.value = resultado.nombre;
-                idCategoria.value = resultado.id;
-                $feedback.innerText = '';
+            try {
+                var resultado = JSON.parse(response);
+                
+                if (resultado && resultado.id && resultado.nombre) {
+                    categoriaField.value = resultado.nombre;
+                    idCategoriaField.value = resultado.id;
+                    if (feedbackField) feedbackField.innerText = '';
+                } else {
+                    categoriaField.value = '';
+                    if (feedbackField) feedbackField.innerText = 'Categoría no encontrada';
+                }
+            } catch (e) {
+                categoriaField.value = '';
+                if (feedbackField) feedbackField.innerText = 'Error al buscar categoría';
             }
         },
         error: function(xhr, status, error) {
-            console.error("Error AJAX:", error);
+            categoriaField.value = '';
+            if (feedbackField) feedbackField.innerText = 'Error de conexión';
         }
     });
 }

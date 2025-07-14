@@ -6,7 +6,7 @@
             <?= $apellido; ?>
         </div>
         <div class="publico m-0">
-            <a href="./categoria.php" id="categoria"><i class='bx bx-category'></i><span>Categoría</span></a>
+            <a href="./categoria.php" id="menu-categoria"><i class='bx bx-category'></i><span>Categoría</span></a>
             <a href="./producto.php" id="producto"><i class='bx bx-category'></i><span>Producto</span></a>
             <a href="./cliente.php" id="cliente"><i class='bx bx-user'></i><span>Cliente</span></a>
             <a href="./libro.php" id="libro"><i class='bx bx-book'></i><span>Libro</span></a>

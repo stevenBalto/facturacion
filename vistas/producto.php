@@ -77,7 +77,7 @@ ob_start();
             <div class="d-flex flex-row justify-content-between">
                 <div class="pr-md-2">
                     <input class="form-control" type="text" id="idCategoria" name="idCategoria" onblur="buscarCategoria()">
-                    <small class="text-danger" id="cod-categoria-feedback"></small>
+                    <small class="text-danger" id="id-categoria-feedback"></small>
                 </div>
 
                 <div class="">
@@ -87,7 +87,7 @@ ob_start();
         </div>
         <div class="col-sm-3 my-1">
             <label for="categoria">Nombre Categoría:</label>
-            <input readonly class="form-control" type="text" id="categoria" name="categoria" readonly>
+            <input readonly class="form-control" type="text" id="categoria" name="categoria">
         </div>
         <div class="col-sm-12 my-2">
             <button type="button" class="col-sm-2 mr-1 btn btn-success" id="Guardar" onclick="guardar()" disabled=""><i class="fa fa-save"></i> Guardar</button>
@@ -328,24 +328,21 @@ include './includes/layout.php';
         $('#producto-modal').modal('show')
     }
 
-    function selectCategoria(id) {
+function selectCategoria(id) {
+    var $idCategoria = document.getElementById('idCategoria');
+    var $categoria = document.getElementById('categoria');
+    var $feedback = document.getElementById('cod-categoria-feedback');
+
     $.ajax({
         type: "POST",
-        url: "../ajax/producto.php?op=buscar_categoria", // 👈 CORREGIDO
-        data: { idCategoria: id }, // 👈 el parámetro debe llamarse idCategoria
+        url: "../ajax/producto.php?op=buscar_categoria",
+        data: { idCategoria: id },
         success: function(response) {
-            try {
-                const resultado = JSON.parse(response);
-                if (resultado && resultado.nombre) {
-                    document.getElementById("idCategoria").value = resultado.id;
-                    document.getElementById("categoria").value = resultado.nombre;
-                    $('#producto-modal').modal('hide');
-                } else {
-                    document.getElementById("cod-categoria-feedback").innerText = "Nombre no encontrado";
-                }
-            } catch (e) {
-                console.error("Error al parsear JSON:", e);
-            }
+            var resultado = JSON.parse(response);
+            $categoria.value = resultado.nombre;
+            $idCategoria.value = resultado.id;
+            $('#producto-modal').modal('hide');
+            $feedback.innerText = '';
         }
     });
 }
@@ -353,32 +350,43 @@ include './includes/layout.php';
 
 
 
-    function buscarCategoria() {
-        var idCategoria = document.getElementById('idCategoria')
-        var $categoria = document.getElementById('categoria')
-        var $feedback = document.getElementById('cod-categoria-feedback')
 
-        $categoria.value = ''
 
-        $.ajax({
-            type: "POST",
-            url: "../ajax/producto.php?op=buscar_categoria",
-            data: {
-                idCategoria: idCategoria.value
-            },
-            success: function(response) {
-                var resultado = JSON.parse(response);
 
-                if (resultado == null) {
-                    $feedback.innerText = 'Categoría no existe'
-                } else {
-                    $categoria.value = resultado.nombre;
-                    idCategoria.value = resultado.id;
-                    $feedback.innerText = ''
-                }
+ function buscarCategoria() {
+    var idCategoria = document.getElementById('idCategoria');
+    var $categoria = document.getElementById('categoria');
+    var $feedback = document.getElementById('id-categoria-feedback');
+
+    $categoria.value = '';
+    $feedback.innerText = '';
+
+    $.ajax({
+        type: "POST",
+        url: "../ajax/categoria.php?op=mostrar",
+        data: {
+            id: idCategoria.value
+        },
+        success: function(response) {
+            console.log("Respuesta del servidor:", response);
+            var resultado = JSON.parse(response);
+
+            if (!resultado || resultado == null) {
+                $feedback.innerText = 'Categoría no existe';
+            } else {
+                $categoria.value = resultado.nombre;
+                idCategoria.value = resultado.id;
+                $feedback.innerText = '';
             }
-        });
-    }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error AJAX:", error);
+        }
+    });
+}
+
+
+
 </script>
 </body>
 </html>

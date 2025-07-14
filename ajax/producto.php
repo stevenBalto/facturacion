@@ -28,7 +28,6 @@ switch ($_GET["op"]) {
         } else {
             echo "Producto editado";
         }
-
         break;
 
     case 'eliminar':
@@ -45,6 +44,13 @@ switch ($_GET["op"]) {
         $rspta = $producto->seleccionar($id);
         echo json_encode($rspta);
         break;
+
+    case 'buscar_categoria':
+    $rspta = $producto->buscar_categoria($_POST["idCategoria"]);
+    echo json_encode($rspta->fetch_assoc());
+    break;
+
+
 
     case 'listar':
         $rspta = $producto->listar();
@@ -72,40 +78,25 @@ switch ($_GET["op"]) {
         echo json_encode($results);
         break;
 
-    case 'buscar_categoria':
-    require_once "../modelos/Categoria.php";
-    $categoria = new Categoria();
-    $idCategoria = $_POST["idCategoria"] ?? "";
-    $rspta = $categoria->mostrar($idCategoria);
+   case 'listar_categorias':
+    $rspta = $producto->listar_categorias();
+    $data = array();
 
-    if ($rspta) {
-        // Devuelve como fila asociativa (como en libro.php)
-        echo json_encode($rspta->fetch_assoc());
-    } else {
-        echo json_encode(null);
+    while ($reg = $rspta->fetch_object()) {
+        $data[] = array(
+            "0" => $reg->id,
+            "1" => $reg->nombre,
+            "2" => '<button class="btn btn-primary" onclick="selectCategoria(\'' . $reg->id . '\')"><i class="bx bx-search"></i>&nbsp;Seleccionar</button>'
+        );
     }
+
+    $results = array(
+        "sEcho" => 1,
+        "iTotalRecords" => count($data),
+        "iTotalDisplayRecords" => count($data),
+        "aaData" => $data
+    );
+    echo json_encode($results);
     break;
 
-
-
-    case 'listar_categorias':
-        $rspta = $producto->listar_categorias();
-        $data = array();
-
-        while ($reg = $rspta->fetch_object()) {
-            $data[] = array(
-                "0" => $reg->id,
-                "1" => $reg->nombre,
-                "2" => '<button class="btn btn-primary" onclick="selectCategoria(\'' . $reg->id . '\')"><i class="bx bx-search"></i>&nbsp;Seleccionar</button>'
-            );
-        }
-
-        $results = array(
-            "sEcho" => 1,
-            "iTotalRecords" => count($data),
-            "iTotalDisplayRecords" => count($data),
-            "aaData" => $data
-        );
-        echo json_encode($results);
-        break;
 }

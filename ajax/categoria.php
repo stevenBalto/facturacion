@@ -36,14 +36,10 @@ switch ($_GET["op"]) {
 		break;
 
 	case 'mostrar':
-		$rspta = $categoria->mostrar($id);
-		if($rspta) {
-			//Codificar el resultado utilizando json
-			echo json_encode($rspta);
-		} else {
-			echo json_encode(array("error" => "No se encontró la categoría"));
-		}
-		break;
+    $id = $_POST["id"];
+    $rspta = $categoria->mostrar($id);
+    echo json_encode($rspta);
+    break;
 
 	case 'listar':
 		$rspta = $categoria->listar();

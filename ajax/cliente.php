@@ -47,10 +47,22 @@ switch ($_GET["op"]) {
         }
         break;
 
-    case 'listar':
-        $rspta = $cliente->listar();
-        $data = array();
+   case 'listar':
+    $rspta = $clienteDAO->getAll();
+    $data = [];
 
+    foreach ($rspta as $reg) {
+        $data[] = [
+            "cedula" => $reg['cedula'],
+            "nombre" => $reg['nombre'],
+            "telefono" => $reg['telefono']
+        ];
+    }
+
+    echo json_encode(["data" => $data]);
+break;
+
+<<<<<<< Updated upstream
         if($rspta) {
             while ($reg = $rspta->fetch_object()) {
                 $data[] = array(
@@ -62,6 +74,8 @@ switch ($_GET["op"]) {
                 );
             }
         }
+=======
+>>>>>>> Stashed changes
         
         $results = array(
             "sEcho" => 1, //Información para el datatables

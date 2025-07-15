@@ -3,22 +3,18 @@ $title = 'Cliente';
 ob_start();
 ?>
 
-<!-- Cliente Modal -->
 <div class="modal" id="cli-modal">
     <div class="modal-dialog">
         <div class="modal-content">
 
-            <!-- Modal Header -->
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
 
-            <!-- Modal body -->
             <div class="modal-body" id="eliminar-body">
                 ¿Seguro deseas eliminar el cliente?
             </div>
 
-            <!-- Modal footer -->
             <div class="modal-footer" id="eliminar-footer">
                 <button type="button" class="btn btn-success" data-dismiss="modal"><i class="fa fa-chevron-left"></i> Salir</button>
                 <button type="button" class="btn btn-danger" onclick="eliminar()"><i class="fa fa-trash"></i> Eliminar</button>
@@ -28,9 +24,7 @@ ob_start();
         </div>
     </div>
 </div>
-<!-- Cliente Modal End -->
 
-<!-- Modal para ver facturas -->
 <div class="modal fade" id="facturas-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -123,10 +117,8 @@ include './includes/layout.php';
 ?>
 
 <script>
-    //Muestra el listao de registros oculta las cajas de texto
     listar();
 
-    // Validación en tiempo real
     $("#cedula, #nombre, #telefono, #direccion").on('input', function() {
         var cedula = $("#cedula").val().trim();
         var nombre = $("#nombre").val().trim();
@@ -150,39 +142,29 @@ include './includes/layout.php';
         document.getElementById("Guardar").disabled = true;
     }
     
-    //Se invoca cuando se preciona el boton de Agregar
     function agregar() {
-        //#top-form: Es el id del div que contiene la ventana del formulario con las cajas de texto
-        //Muestra las cajas de texto
+        
         $("#top-form").removeClass('d-none');
-        //#listadoregistros: Es el id del div que contiene el datatable con el listado 
-        //Oculta el listado de registros
+        
         document.getElementById("listadoregistros").style.display = "none";
-        //Habilita los botones Cancelar y Guardar
         habilitar_botones()
         $("#cedula").val("")
         $("#nombre").val("")
         $("#telefono").val("")
         $("#direccion").val("")
-        //Enfocar el campo cedula
+        
         $("#cedula").focus()
-        //Nuevo es un control oculto el valor 1 que se le asigna (hidden)
-        //es para indicar que se esta agregando un registro nuevo
+  
         $("#nuevo").val(1)
     }
 
-    //Se invoca cuando se preciona el boton eliminar del listado
     function showModal(cedula) {
-        //Guarda en un campo oculto la cedula del registro a Eliminar
         $('#modal-cliente-cedula').val(cedula)
-        //Muestra la ventana de Desea Eliminar el Registro?
         $('#cli-modal').modal('show')
     }
 
-    //Se invoca cuando se preciona el boton Eliminar del mensaje Desea Eliminar el Registro?
     function eliminar() {
-        //Obtenemos la cedula del cliente
-        //El #modal-cliente-cedula es un control oculto con la cedula del cliente (hidden)
+        
         cedula = $('#modal-cliente-cedula').val()
 
         $.ajax({
@@ -200,7 +182,6 @@ include './includes/layout.php';
                         confirmButtonText: 'OK'
                     });
                 }
-                //Actualiza el listado
                 listar();
             },
             error: function() {
@@ -212,19 +193,16 @@ include './includes/layout.php';
                 });
             }
         })
-        //Oculta el mensaje de Desea Eliminar el Registro?
         $('#cli-modal').modal('hide');
     }
 
-    //Se invoca cuando se preciona el boton de Guardar en las cajas de texto
+    
     function guardar() {
         var cedula = $("#cedula").val();
         var nombre = $("#nombre").val();
         var telefono = $("#telefono").val();
         var direccion = $("#direccion").val();
-        //Obtenemos el valor del control oculto nuevo
         var nuevo = $("#nuevo").val();
-        //Si nuevo es 1 Guarda si es 0 Edita
         var url = nuevo == 1 ? "../ajax/cliente.php?op=guardar" : "../ajax/cliente.php?op=editar";
 
         if (cedula.trim() == '' || nombre.trim() == '' || telefono.trim() == '' || direccion.trim() == '') {
@@ -253,7 +231,6 @@ include './includes/layout.php';
                     });
                     
                     if(response.includes('correctamente')) {
-                        //Limpiar el formulario y mostrar el listado
                         cancelar();
                     }
                 },
@@ -269,14 +246,10 @@ include './includes/layout.php';
         }
     }
 
-    //Se invoca cuando se preciona el boton Editar del listado
     function editar(cedula) {
         habilitar_botones();
-        //Oculta el listado de registros
         document.getElementById("listadoregistros").style.display = "none";
-        //Muestra las cajas de texto
         $("#top-form").removeClass('d-none');
-        //La caja de texto oculta le asigna un valor de 0
         $("#nuevo").val(0)
 
         $.ajax({
@@ -287,7 +260,6 @@ include './includes/layout.php';
             },
             success: function(response) {
                 try {
-                    //Muestra los valores en la caja de texto
                     var resultado = JSON.parse(response);
                     if(resultado.error) {
                         Swal.fire({
@@ -302,7 +274,6 @@ include './includes/layout.php';
                         document.getElementById("nombre").value = resultado['nombre'];
                         document.getElementById("telefono").value = resultado['telefono'];
                         document.getElementById("direccion").value = resultado['direccion'];
-                        // Deshabilitar el campo cédula en modo edición
                         document.getElementById("cedula").disabled = true;
                     }
                 } catch(e) {
@@ -327,31 +298,23 @@ include './includes/layout.php';
         });
     }
 
-    //Se invoca cuando se preciona el boton de cancelar en las cajas de texto
     function cancelar() {
-        //Limpia las cajas de texto
         document.getElementById("cedula").value = "";
         document.getElementById("nombre").value = "";
         document.getElementById("telefono").value = "";
         document.getElementById("direccion").value = "";
-        // Rehabilitar el campo cédula
         document.getElementById("cedula").disabled = false;
-        //Desabilita los botones de Guardar y Cancelar
         desabilitar_botones();
-        //Oculta las cajas de texto y muestra el listado
         listar()
     }
 
-    //Se invoca cada vez que se quiere mostrar el listado o actualizar los registros que se muestran
     function listar() {
-        //Muestra el listado de registros
         document.getElementById("listadoregistros").style.display = "block";
-        //Oculta las cajas de texto
         $("#top-form").addClass('d-none');
 
         tabla = $('#tbllistado').dataTable({
-            "aProcessing": true, //Activamos el procesamiento del datatables
-            "aServerSide": true, //Paginación y filtrado realizados por el servidor
+            "aProcessing": true, 
+            "aServerSide": true, 
             "ajax": {
                 url: "../ajax/cliente.php?op=listar",
                 type: "get",
@@ -361,23 +324,20 @@ include './includes/layout.php';
                 }
             },
             "bDestroy": true,
-            "iDisplayLength": 5, //Paginación
+            "iDisplayLength": 5, 
             "order": [
                 [0, "asc"]
-            ] //Ordenar (columna,orden)
+            ] 
         }).DataTable();
     }
 
-    // Función para ver facturas de un cliente
     function verFacturas(cedula, nombreCliente) {
         $('#facturas-modal-title').text('Facturas de: ' + nombreCliente);
         
-        // Destruir DataTable si existe
         if ($.fn.DataTable.isDataTable('#tblFacturas')) {
             $('#tblFacturas').DataTable().destroy();
         }
         
-        // Crear nuevo DataTable para facturas
         $('#tblFacturas').DataTable({
             "processing": true,
             "lengthChange": false,

@@ -1,9 +1,7 @@
 <?php 
-// Importamos la clase Factura.php
 require_once "../modelos/Factura.php";
 require_once "../config/Conexion.php";
 
-// Instanciamos la clase Factura
 $factura = new Factura();
 
 $cedula = isset($_POST["cedula"]) ? limpiarCadena($_POST["cedula"]) : "";
@@ -35,7 +33,6 @@ switch ($_GET["op"]) {
         break;
 
     case 'listar':
-        // Listar todas las facturas
         $sql = "SELECT f.id, f.cedulaCliente, c.nombre as cliente, f.fecha, f.total, f.estado 
                 FROM factura f 
                 INNER JOIN cliente c ON f.cedulaCliente = c.cedula 
@@ -71,12 +68,10 @@ switch ($_GET["op"]) {
     case 'eliminar':
         $id = isset($_POST["id"]) ? limpiarCadena($_POST["id"]) : "";
         
-        // Primero eliminar los detalles de la factura
         $sql_detalle = "DELETE FROM detalle_factura WHERE idFactura = '$id'";
         $rspta_detalle = ejecutarConsulta($sql_detalle);
         
         if ($rspta_detalle) {
-            // Luego eliminar la factura
             $sql_factura = "DELETE FROM factura WHERE id = '$id'";
             $rspta_factura = ejecutarConsulta($sql_factura);
             
@@ -109,7 +104,6 @@ switch ($_GET["op"]) {
         break;
 
     case 'finalizar_factura':
-        // Finalizar la factura cambiando el estado de 'temporal' a 'finalizada'
         $cedula = isset($_POST["cedula"]) ? limpiarCadena($_POST["cedula"]) : "";
         $fecha = isset($_POST["fecha"]) ? limpiarCadena($_POST["fecha"]) : "";
         $fechaformato = date('Y-m-d', strtotime($fecha));
@@ -125,7 +119,6 @@ switch ($_GET["op"]) {
         break;
 
     case 'insertar':
-        // Recibir el encabezado enviado por AJAX
         $encabezado = $_POST['encabezado'];
         $cedula = $encabezado['cedula'];
         $fecha = $encabezado['fecha'];
@@ -137,7 +130,6 @@ switch ($_GET["op"]) {
         if ($rspta_encabezado) {
             $idfactura = $factura->obtenerId();
             
-            // Recibir el detalle enviado por AJAX
             $detalle = json_decode($_POST['detalle'], true);
             $errores = 0;
             

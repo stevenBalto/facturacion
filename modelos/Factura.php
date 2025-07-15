@@ -1,16 +1,13 @@
 <?php 
-// Incluímos inicialmente la conexión a la base de datos
 require "../config/Conexion.php";
 
 class Factura
 {
-    // Implementamos nuestro constructor
     public function __construct()
     {
 
     }
 
-    // Implementamos un método para insertar registros del encabezado
     public function insertarEncabezado($cedula, $fecha, $total)
     {
         try {
@@ -18,11 +15,10 @@ class Factura
                     VALUES ('$cedula', '$fecha', '$total')";
             return ejecutarConsulta($sql);
         } catch (Exception $e) {
-            return $e->getCode(); // Devuelve el código de error de la excepción
+            return $e->getCode(); 
         }
     }
 
-    // Implementamos un método para insertar registros del datatable
     public function insertarDetalle($idproducto, $descripcion, $precio, $cantidad, $subtotal, $idfactura)
     {
         try {
@@ -30,18 +26,17 @@ class Factura
                     VALUES ('$idproducto', '$cantidad', '$precio', '$subtotal', '$idfactura')";
             return ejecutarConsulta($sql);
         } catch (Exception $e) {
-            return $e->getCode(); // Devuelve el código de error de la excepción
+            return $e->getCode(); 
         }
     }
 
-    // Implementamos un método para obtener el último ID insertado
+   
     public function obtenerId()
     {
         $sql = "SELECT max(id) as idfactura FROM factura";
         return ejecutarConsultaSimpleFila($sql);
     }
 
-    // Implementamos un método para listar facturas por cliente
     public function listarPorCliente($cedula)
     {
         try {
@@ -57,7 +52,6 @@ class Factura
         }
     }
 
-    // Implementamos un método para obtener detalles de una factura
     public function obtenerDetalle($idfactura)
     {
         try {

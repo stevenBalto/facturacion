@@ -7,19 +7,16 @@ ob_start();
     <?= $title ?>
 </h1>
 
-<!-- Factura Modal -->
 <div class="modal" id="factura-modal">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
 
-            <!-- Modal Header -->
             <div class="modal-header">
                 <h2 id="buscar-producto-title" class="d-none">Buscar Producto</h2>
                 <h2 id="buscar-cliente-title" class="d-none">Buscar Cliente</h2>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
 
-            <!-- Modal body -->
             <div class="modal-body" id="modal-body">
                 <h4 id="delete-message" style="display:none"></h4>
                 <div class="row table-responsive pl-3 d-none" id="listaProductos">
@@ -65,7 +62,6 @@ ob_start();
                 </div>
             </div>
 
-            <!-- Modal footer -->
             <div class="modal-footer" id="eliminar-footer">
                 <button type="button" class="btn btn-success" data-dismiss="modal"><i class="fa fa-chevron-left"></i> Salir</button>
                 <button id="btn-eliminar" class="btn btn-danger d-none" onclick="eliminar()"><i class="fa fa-trash"></i> Eliminar</button>
@@ -75,25 +71,20 @@ ob_start();
         </div>
     </div>
 </div>
-<!-- Factura Modal End -->
 
-<!-- Modal Eliminar Detalle -->
 <div class="modal" id="eliminar-detalle-modal">
     <div class="modal-dialog">
         <div class="modal-content">
 
-            <!-- Modal Header -->
             <div class="modal-header">
                 <h4 class="modal-title">Eliminar Producto</h4>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
 
-            <!-- Modal body -->
             <div class="modal-body">
                 ¿Seguro deseas eliminar este producto de la factura?
             </div>
 
-            <!-- Modal footer -->
             <div class="modal-footer">
                 <button type="button" class="btn btn-success" data-dismiss="modal"><i class="fa fa-chevron-left"></i> Cancelar</button>
                 <button type="button" class="btn btn-danger" onclick="confirmarEliminarDetalle()"><i class="fa fa-trash"></i> Eliminar</button>
@@ -103,7 +94,6 @@ ob_start();
         </div>
     </div>
 </div>
-<!-- Modal Eliminar Detalle End -->
 
 <div class="mb-3 card p-3">
     <div class="row">
@@ -204,11 +194,9 @@ include './includes/layout.php';
 ?>
 
 <script>
-    // Crear una variable global para el DataTable
     var tabla;
 
     $(document).ready(function() {
-        // Crear el DataTable para mostrar todos los detalles existentes + nuevos locales
         tabla = $('#tabla').DataTable({
             "processing": false,
             "serverSide": false,
@@ -253,13 +241,11 @@ include './includes/layout.php';
             }
         });
 
-        // Calcular subtotal cuando cambie cantidad o precio
         $('#cantidad, #precioUnitario').on('input', function() {
             calcularSubtotal();
         });
 
-        // La tabla se carga automáticamente con todos los datos al inicializar
-        // Actualizar total después de cargar
+        
         tabla.on('xhr.dt', function() {
             actualizarTotalLocal();
         });
@@ -281,7 +267,6 @@ include './includes/layout.php';
     }
 
     function agregarFila() {
-        // Obtener los valores de los cuadros de texto
         var idProducto = $('#idProducto').val();
         var nombre = $('#nombre').val();
         var cantidad = $('#cantidad').val();
@@ -289,28 +274,25 @@ include './includes/layout.php';
         var cedula = $('#cedula').val();
         var fecha = $('#fecha').val();
 
-        // Validar que los campos de texto no estén vacíos
         if (idProducto === '' || cantidad === '' || precioUnitario === '' || cedula === '' || fecha === '') {
             Swal.fire('Todos los campos son obligatorios.');
             return;
         }
 
-        // Calcular subtotal
         var subtotal = cantidad * precioUnitario;
 
-        // Agregar fila directamente a la tabla (solo local, no a la BD)
+        
         tabla.row.add([
-            cedula,                                    // Cliente
-            fecha,                                     // Fecha
-            idProducto,                               // ID Producto
-            nombre,                                   // Nombre Producto
-            cantidad,                                 // Cantidad
-            "₡" + Number(precioUnitario).toLocaleString('es-CR', {minimumFractionDigits: 2}), // Precio
-            "₡" + Number(subtotal).toLocaleString('es-CR', {minimumFractionDigits: 2}),       // Subtotal
+            cedula,                                    
+            fecha,                                 
+            idProducto,                               
+            nombre,                                  
+            cantidad,                                
+            "₡" + Number(precioUnitario).toLocaleString('es-CR', {minimumFractionDigits: 2}), 
+            "₡" + Number(subtotal).toLocaleString('es-CR', {minimumFractionDigits: 2}),       
             '<button class="btn btn-danger btn-sm" onclick="eliminarFilaLocal(this)"><i class="fa fa-trash"></i></button>' // Acciones
         ]).draw();
 
-        // Mostrar mensaje de éxito
         Swal.fire({
             icon: 'success',
             title: 'Agregado',
@@ -319,21 +301,16 @@ include './includes/layout.php';
             showConfirmButton: false
         });
 
-        // Limpiar los campos
         limpiar();
         
-        // Actualizar total local
         actualizarTotalLocal();
     }
 
     function eliminarFilaLocal(btn) {
-        // Obtener la fila que contiene el botón
         var fila = $(btn).closest('tr');
         
-        // Eliminar la fila del DataTable
         tabla.row(fila).remove().draw();
         
-        // Actualizar total
         actualizarTotalLocal();
         
         Swal.fire({
@@ -346,25 +323,18 @@ include './includes/layout.php';
     }
 
     function eliminarFila(btn) {
-        // Obtener la fila que contiene el botón
         var fila = $(btn).closest('tr');
 
-        // Eliminar la fila del DataTable
         tabla.row(fila).remove().draw();
     }
 
-    // Función para mostrar el modal de confirmación (igual que en categoría)
     function eliminarDetalle(idDetalle) {
         console.log('Preparando eliminación de detalle con ID:', idDetalle); // Debug
-        // Guardar el ID en el campo oculto
         $('#modal-detalle-id').val(idDetalle);
-        // Mostrar el modal de confirmación
         $('#eliminar-detalle-modal').modal('show');
     }
 
-    // Función que se ejecuta cuando se confirma la eliminación (igual que en categoría)
     function confirmarEliminarDetalle() {
-        // Obtener el ID del campo oculto
         var idDetalle = $('#modal-detalle-id').val();
         console.log('Confirmando eliminación de detalle con ID:', idDetalle); // Debug
         
@@ -375,27 +345,23 @@ include './includes/layout.php';
                 idDetalle: idDetalle
             },
             success: function(response) {
-                console.log('Respuesta del servidor:', response); // Debug
+                console.log('Respuesta del servidor:', response); 
                 
                 try {
                     var resultado = JSON.parse(response);
                     
                     if (resultado.status === 'success') {
-                        // Cerrar el modal
                         $('#eliminar-detalle-modal').modal('hide');
                         
-                        // Mostrar mensaje de éxito (igual que en categoría)
                         Swal.fire({
                             title: 'Resultado',
                             text: resultado.message,
-                            type: 'success', // Usar 'type' en lugar de 'icon'
+                            type: 'success', 
                             confirmButtonText: 'OK'
                         });
                         
-                        // Recargar la tabla
                         tabla.ajax.reload();
                     } else {
-                        // Mostrar mensaje de error
                         Swal.fire({
                             title: 'Error',
                             text: resultado.message,
@@ -404,7 +370,6 @@ include './includes/layout.php';
                         });
                     }
                 } catch (e) {
-                    // Si la respuesta no es JSON válido
                     if (response.includes('correctamente')) {
                         $('#eliminar-detalle-modal').modal('hide');
                         
@@ -427,8 +392,8 @@ include './includes/layout.php';
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                console.log('Error AJAX:', textStatus, errorThrown); // Debug
-                console.log('Respuesta completa:', jqXHR.responseText); // Debug
+                console.log('Error AJAX:', textStatus, errorThrown); 
+                console.log('Respuesta completa:', jqXHR.responseText); 
                 
                 Swal.fire({
                     title: 'Error',
@@ -442,35 +407,29 @@ include './includes/layout.php';
 
     function editarFila(btn) {
 
-        // Obtener la fila que contiene el botón
         var fila = $(btn).closest('tr');
 
-        // Obtener los valores de la fila
         var idProducto = tabla.cell(fila, 0).data();
         var nombre = tabla.cell(fila, 1).data();
         var cantidad = tabla.cell(fila, 2).data();
         var precioUnitario = tabla.cell(fila, 3).data();
         var subtotal = tabla.cell(fila, 4).data();
 
-        //Mostramos los valores en las cajas de texto
         $('#idProducto').val(idProducto);
         $('#nombre').val(nombre);
         $('#cantidad').val(cantidad);
         $('#precioUnitario').val(precioUnitario);
         $('#subtotal').val(subtotal);
 
-        // Eliminar la fila del DataTable
         tabla.row(fila).remove().draw();
 
     }
 
     function guardarDatos() {
-        // Obtener los datos básicos
         var cedula = $("#cedula").val();
         var nombrecliente = $("#nombrecliente").val();
         var fecha = $("#fecha").val();
 
-        // Validar campos básicos
         if (cedula == "" || nombrecliente == "" || fecha == "") {
             Swal.fire({
                 icon: 'warning',
@@ -480,13 +439,11 @@ include './includes/layout.php';
             return;
         }
 
-        // Obtener solo las filas que son nuevas (las que agregamos localmente)
-        // Las filas nuevas tienen botón rojo, las de BD tienen botón amarillo
+      
         var filasNuevas = [];
         tabla.rows().every(function(rowIdx, tableLoop, rowLoop) {
             var data = this.data();
             if (data && data[7] && data[7].includes('btn-danger')) { // Botón rojo = fila nueva
-                // Extraer valores limpios
                 var precioText = data[5].toString().replace(/[₡,]/g, '');
                 var subtotalText = data[6].toString().replace(/[₡,]/g, '');
                 
@@ -509,7 +466,6 @@ include './includes/layout.php';
             return;
         }
 
-        // Guardar cada fila nueva
         var guardarPromesas = [];
         filasNuevas.forEach(function(fila) {
             var promesa = $.ajax({
@@ -521,7 +477,6 @@ include './includes/layout.php';
             guardarPromesas.push(promesa);
         });
 
-        // Ejecutar todas las promesas
         Promise.all(guardarPromesas)
             .then(function(resultados) {
                 var exitosos = resultados.filter(r => r.status === 'success').length;
@@ -534,12 +489,10 @@ include './includes/layout.php';
                     showConfirmButton: false
                 });
                 
-                // Limpiar formulario
                 $('#cedula').val('');
                 $('#nombrecliente').val('');
                 limpiar();
                 
-                // Recargar la tabla completa
                 tabla.ajax.reload(function() {
                     actualizarTotalLocal();
                 });
@@ -556,12 +509,10 @@ include './includes/layout.php';
     function actualizarTotalLocal() {
         var total = 0;
         
-        // Recorrer todas las filas de la tabla y sumar los subtotales
         tabla.rows().every(function(rowIdx, tableLoop, rowLoop) {
             var data = this.data();
-            if (data && data[6]) { // Columna 6 es el subtotal
+            if (data && data[6]) { 
                 var subtotalText = data[6].toString();
-                // Extraer el número del texto "₡1,500.00"
                 var subtotal = parseFloat(subtotalText.replace(/[₡,]/g, ''));
                 if (!isNaN(subtotal)) {
                     total += subtotal;
@@ -593,7 +544,6 @@ include './includes/layout.php';
                 $('#total-factura').text('₡' + response.total);
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                // Error silencioso - no mostrar en consola
             }
         });
     }
@@ -652,7 +602,6 @@ include './includes/layout.php';
         });
     }
 
-    // Listar productos
     function listarProductos() {
         $("#btn-eliminar").addClass('d-none');
         $('#delete-message').hide()
@@ -663,9 +612,9 @@ include './includes/layout.php';
 
 
         $('#tbllistadoProductos').dataTable({
-            "aProcessing": true, //Activamos el procesamiento del datatables
-            "aServerSide": true, //Paginación y filtrado realizados por el servidor
-            dom: 'Bfrtip', //Definimos los elementos del control de tabla
+            "aProcessing": true, 
+            "aServerSide": true, 
+            dom: 'Bfrtip',
             buttons: [
                 'copyHtml5',
                 'excelHtml5',
@@ -677,14 +626,14 @@ include './includes/layout.php';
                 type: "get",
                 dataType: "json",
                 error: function(e) {
-                    // Error silencioso
+                  
                 }
             },
             "bDestroy": true,
-            "iDisplayLength": 5, //Paginación
+            "iDisplayLength": 5, 
             "order": [
                 [0, "asc"]
-            ] //Ordenar (columna,orden)
+            ] 
         }).DataTable();
 
         $('#factura-modal').modal('show')
@@ -743,7 +692,6 @@ include './includes/layout.php';
         });
     }
 
-    // Listar Clientes
     function listarClientes() {
         $("#btn-eliminar").addClass('d-none');
         $('#delete-message').hide()
@@ -752,9 +700,9 @@ include './includes/layout.php';
         document.getElementById("listaProductos").classList.add("d-none");
 
         $('#tbllistadoClientes').dataTable({
-            "aProcessing": true, //Activamos el procesamiento del datatables
-            "aServerSide": true, //Paginación y filtrado realizados por el servidor
-            dom: 'Bfrtip', //Definimos los elementos del control de tabla
+            "aProcessing": true, 
+            "aServerSide": true, 
+            dom: 'Bfrtip', 
             buttons: [
                 'copyHtml5',
                 'excelHtml5',
@@ -766,14 +714,13 @@ include './includes/layout.php';
                 type: "get",
                 dataType: "json",
                 error: function(e) {
-                    // Error silencioso
                 }
             },
             "bDestroy": true,
-            "iDisplayLength": 5, //Paginación
+            "iDisplayLength": 5, 
             "order": [
                 [0, "asc"]
-            ] //Ordenar (columna,orden)
+            ] 
         }).DataTable();
 
         $('#listaClientes').removeClass('d-none')
@@ -785,13 +732,11 @@ include './includes/layout.php';
         var $cedula = document.getElementById('cedula')
         var $feedback = document.getElementById('cedula-feedback')
 
-        // Usar directamente el nombre que viene del botón
         $nombrecliente.value = nombre;
         $cedula.value = cedula;
         if ($feedback) $feedback.innerText = '';
         $('#factura-modal').modal('hide');
         
-        // Recargar la tabla con los datos del nuevo cliente
         tabla.ajax.reload();
         actualizarTotalLocal();
     }

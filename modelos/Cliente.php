@@ -1,5 +1,4 @@
 <?php
-//Incluímos inicialmente la conexión a la base de datos
 require "../config/Conexion.php";
 
 class Cliente
@@ -8,7 +7,6 @@ class Cliente
     {
     }
 
-    //Implementamos un método para insertar registros
     public function insertar($cedula, $nombre, $telefono, $direccion)
     {
         try {
@@ -23,7 +21,6 @@ class Cliente
         }
     }
 
-    //Implementamos un método para editar registros
     public function editar($cedula, $nombre, $telefono, $direccion)
     {
         try {
@@ -38,7 +35,6 @@ class Cliente
         }
     }
 
-    //Implementamos un método para eliminar registros
     public function eliminar($cedula)
     {
         try {
@@ -50,14 +46,12 @@ class Cliente
         }
     }
 
-    // Busca un cliente por cédula
     public function buscar($cedula)
     {
         $sql = "SELECT * FROM cliente WHERE cedula='$cedula'";
         return ejecutarConsultaSimpleFila($sql);
     }
 
-    // Lista todos los clientes
     public function listar()
     {
         try {
@@ -68,7 +62,6 @@ class Cliente
         }
     }
 
-    // Busca un cliente por Id
     public function mostrar($cedula)
     {
         try {

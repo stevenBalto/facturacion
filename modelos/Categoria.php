@@ -1,16 +1,13 @@
 <?php 
-//Incluímos inicialmente la conexión a la base de datos
 require "../config/Conexion.php";
 
 Class Categoria
 {
-	//Implementamos nuestro constructor
 	public function __construct()
 	{
 
 	}
 
-	//Implementamos un método para insertar registros
 	public function insertar($nombre)
 	{
 		try {
@@ -22,7 +19,6 @@ Class Categoria
 		}
 	}
 
-	//Implementamos un método para editar registros
 	public function editar($id,$nombre)
 	{
 		try {
@@ -35,7 +31,6 @@ Class Categoria
 		}
 	}
 
-	//Implementamos un método para eliminar registros
 	public function eliminar($id)
 	{
 		try {
@@ -47,7 +42,6 @@ Class Categoria
 		}
 	}
 
-	//Implementar un método para mostrar los datos de un registro a modificar
 	public function mostrar($id)
 	{
 		try {
@@ -59,7 +53,6 @@ Class Categoria
 		}
 	}
 
-	//Implementar un método para listar los registros
 	public function listar()
 	{
 		try {

@@ -43,7 +43,7 @@ switch ($_GET["op"]) {
 
 	case 'listar':
 		$rspta = $categoria->listar();
-		//Vamos a declarar un array
+		
 		$data = array();
 
 		if($rspta) {
@@ -57,9 +57,9 @@ switch ($_GET["op"]) {
 		}
 		
 		$results = array(
-			"sEcho" => 1, //Información para el datatables
-			"iTotalRecords" => count($data), //enviamos el total registros al datatable
-			"iTotalDisplayRecords" => count($data), //enviamos el total registros a visualizar
+			"sEcho" => 1, 
+			"iTotalRecords" => count($data), 
+			"iTotalDisplayRecords" => count($data), 
 			"aaData" => $data
 		);
 		echo json_encode($results);

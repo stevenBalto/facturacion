@@ -9,18 +9,15 @@ ob_start();
     }
 </style>
 
-<!-- Producto Modal -->
 <div class="modal" id="producto-modal">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
 
-            <!-- Modal Header -->
             <div class="modal-header">
                 <h2 id="buscar-categoria-title" class="d-none">Buscar Categoría</h2>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
 
-            <!-- Modal body -->
             <div class="modal-body" id="modal-body">
                 <h4 id="delete-message" style="display:none"></h4>
                 <div class="row table-responsive pl-3 d-none" id="listaCategorias">
@@ -41,7 +38,6 @@ ob_start();
                 </div>
             </div>
 
-            <!-- Modal footer -->
             <div class="modal-footer" id="eliminar-footer">
                 <button type="button" class="btn btn-success" data-dismiss="modal"><i class="fa fa-chevron-left"></i> Salir</button>
                 <button id="btn-eliminar" class="btn btn-danger d-none" onclick="eliminar()"><i class="fa fa-trash"></i> Eliminar</button>
@@ -51,7 +47,6 @@ ob_start();
         </div>
     </div>
 </div>
-<!-- Producto Modal End -->
 
 <h1 class="display-4"><?= $title ?></h1>
 
@@ -373,7 +368,6 @@ function selectCategoria(id) {
     var categoriaField = document.getElementById('categoria');
     var feedbackField = document.getElementById('id-categoria-feedback');
 
-    // Si el campo está vacío, limpiar y salir
     if (!idCategoriaField.value.trim()) {
         categoriaField.value = '';
         if (feedbackField) feedbackField.innerText = '';

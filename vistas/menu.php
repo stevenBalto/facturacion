@@ -9,7 +9,7 @@
             <a href="./categoria.php" id="menu-categoria"><i class='bx bx-category'></i><span>Categoría</span></a>
            <a href="./producto.php" id="producto"><i class='bx bx-box'></i><span>Producto</span></a>
             <a href="./cliente.php" id="cliente"><i class='bx bx-user'></i><span>Cliente</span></a>
-            <a href="./factura.php" id="factura"><i class='bx bx-receipt'></i><span>Factura</span></a> <!-- NUEVA SECCIÓN -->
+            <a href="./factura.php" id="factura"><i class='bx bx-receipt'></i><span>Factura</span></a> 
         </div>
     </nav>
 </div>

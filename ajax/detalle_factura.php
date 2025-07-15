@@ -1,9 +1,7 @@
 <?php 
-// Importamos las clases necesarias
 require_once "../modelos/Factura.php";
 require_once "../config/Conexion.php";
 
-// Instanciamos la clase Factura (que maneja los detalles)
 $factura = new Factura();
 
 $cedula = isset($_POST["cedula"]) ? limpiarCadena($_POST["cedula"]) : "";
@@ -11,7 +9,6 @@ $idDetalle = isset($_POST["idDetalle"]) ? limpiarCadena($_POST["idDetalle"]) : "
 
 switch ($_GET["op"]) {
     case 'listar_todos_detalles':
-        // Listar TODOS los detalles de facturas (sin filtro)
         $sql = "SELECT d.*, f.fecha, f.cedulaCliente, c.nombre as cliente, p.nombre as nombreProducto 
                 FROM detalle_factura d 
                 INNER JOIN factura f ON d.idFactura = f.id 
@@ -25,13 +22,13 @@ switch ($_GET["op"]) {
         if($rspta) {
             while ($reg = $rspta->fetch_object()) {
                 $data[] = array(
-                    "0" => $reg->cedulaCliente,              // Cliente
-                    "1" => date('Y-m-d', strtotime($reg->fecha)), // Fecha
-                    "2" => $reg->idProducto,                  // ID Producto
-                    "3" => $reg->nombreProducto,              // Nombre Producto
-                    "4" => $reg->cantidad,                    // Cantidad
-                    "5" => "₡" . number_format($reg->precioUnitario, 2), // Precio
-                    "6" => "₡" . number_format($reg->subtotal, 2),       // Subtotal
+                    "0" => $reg->cedulaCliente,              
+                    "1" => date('Y-m-d', strtotime($reg->fecha)), 
+                    "2" => $reg->idProducto,                  
+                    "3" => $reg->nombreProducto,              
+                    "4" => $reg->cantidad,                  
+                    "5" => "₡" . number_format($reg->precioUnitario, 2), 
+                    "6" => "₡" . number_format($reg->subtotal, 2),      
                     "7" => '<button class="btn btn-warning btn-sm" onclick="eliminarDetalle(' . $reg->id . ')"><i class="fa fa-trash"></i></button>' // Acciones para BD
                 );
             }
@@ -47,7 +44,6 @@ switch ($_GET["op"]) {
         break;
 
     case 'agregar_detalle':
-        // Agregar un detalle individual a una factura temporal
         $idProducto = isset($_POST["idProducto"]) ? limpiarCadena($_POST["idProducto"]) : "";
         $cantidad = isset($_POST["cantidad"]) ? limpiarCadena($_POST["cantidad"]) : "";
         $precioUnitario = isset($_POST["precioUnitario"]) ? limpiarCadena($_POST["precioUnitario"]) : "";
@@ -57,25 +53,20 @@ switch ($_GET["op"]) {
         $subtotal = $cantidad * $precioUnitario;
         $fechaformato = date('Y-m-d', strtotime($fecha));
         
-        // Verificar si ya existe una factura temporal para este cliente y fecha
         $sql_verificar = "SELECT id FROM factura WHERE cedulaCliente = '$cedula' AND fecha = '$fechaformato' AND estado = 'temporal'";
         $resultado = ejecutarConsulta($sql_verificar);
         
         if ($resultado && $resultado->num_rows > 0) {
-            // Si existe, usar esa factura
             $factura_temp = $resultado->fetch_object();
             $idfactura = $factura_temp->id;
         } else {
-            // Si no existe, crear una nueva factura temporal
             $sql_factura = "INSERT INTO factura (cedulaCliente, fecha, total, estado) VALUES ('$cedula', '$fechaformato', 0, 'temporal')";
             ejecutarConsulta($sql_factura);
             $idfactura = ejecutarConsulta("SELECT LAST_INSERT_ID() as id")->fetch_object()->id;
         }
         
-        // Insertar el detalle
         $rspta = $factura->insertarDetalle($idProducto, '', $precioUnitario, $cantidad, $subtotal, $idfactura);
         
-        // Actualizar el total de la factura
         $sql_total = "UPDATE factura SET total = (SELECT SUM(subtotal) FROM detalle_factura WHERE idFactura = $idfactura) WHERE id = $idfactura";
         ejecutarConsulta($sql_total);
         
@@ -87,7 +78,6 @@ switch ($_GET["op"]) {
         break;
 
     case 'listar_detalle_temporal':
-        // Listar detalles de una factura temporal
         $cedula = isset($_POST["cedula"]) ? limpiarCadena($_POST["cedula"]) : "";
         $fecha = isset($_POST["fecha"]) ? limpiarCadena($_POST["fecha"]) : "";
         $fechaformato = date('Y-m-d', strtotime($fecha));
@@ -125,7 +115,6 @@ switch ($_GET["op"]) {
         break;
 
     case 'eliminar_detalle':
-        // Eliminar un detalle específico
         $idDetalle = isset($_POST["idDetalle"]) ? limpiarCadena($_POST["idDetalle"]) : "";
         
         if (empty($idDetalle)) {
@@ -137,7 +126,6 @@ switch ($_GET["op"]) {
         $rspta = ejecutarConsulta($sql);
         
         if ($rspta) {
-            // Verificar si realmente se eliminó algo
             $verificar = ejecutarConsulta("SELECT COUNT(*) as existe FROM detalle_factura WHERE id = $idDetalle");
             $resultado = $verificar->fetch_object();
             
@@ -152,7 +140,6 @@ switch ($_GET["op"]) {
         break;
 
     case 'listar_detalles':
-        // Listar todos los detalles de todas las facturas
         $sql = "SELECT d.*, f.fecha, f.cedulaCliente, c.nombre as cliente, p.nombre as nombreProducto 
                 FROM detalle_factura d 
                 INNER JOIN factura f ON d.idFactura = f.id 

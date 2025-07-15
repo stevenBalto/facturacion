@@ -7,10 +7,8 @@
         </div>
         <div class="publico m-0">
             <a href="./categoria.php" id="menu-categoria"><i class='bx bx-category'></i><span>Categoría</span></a>
-            <a href="./producto.php" id="producto"><i class='bx bx-category'></i><span>Producto</span></a>
+            <a href="./producto.php" id="producto"><i class='bx bx-'></i><span>Producto</span></a>
             <a href="./cliente.php" id="cliente"><i class='bx bx-user'></i><span>Cliente</span></a>
-            <a href="./libro.php" id="libro"><i class='bx bx-book'></i><span>Libro</span></a>
-            <a href="./prestamo.php" id="prestamo"><i class='bx bx-book'></i><span>Préstamo</span></a>
             <a href="./factura.php" id="factura"><i class='bx bx-receipt'></i><span>Factura</span></a> <!-- NUEVA SECCIÓN -->
         </div>
     </nav>

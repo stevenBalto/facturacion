@@ -49,6 +49,7 @@ ob_start();
                             <th>Cédula</th>
                             <th>Nombre</th>
                             <th>Teléfono</th>
+                            <th>Dirección</th>
                             <th>Opciones</th>
                         </thead>
                         <tbody>
@@ -57,6 +58,7 @@ ob_start();
                             <th>Cédula</th>
                             <th>Nombre</th>
                             <th>Teléfono</th>
+                            <th>Dirección</th>
                             <th>Opciones</th>
                         </tfoot>
                     </table>
@@ -74,6 +76,34 @@ ob_start();
     </div>
 </div>
 <!-- Factura Modal End -->
+
+<!-- Modal Eliminar Detalle -->
+<div class="modal" id="eliminar-detalle-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">Eliminar Producto</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body">
+                ¿Seguro deseas eliminar este producto de la factura?
+            </div>
+
+            <!-- Modal footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal"><i class="fa fa-chevron-left"></i> Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarEliminarDetalle()"><i class="fa fa-trash"></i> Eliminar</button>
+            </div>
+
+            <input type="hidden" id="modal-detalle-id">
+        </div>
+    </div>
+</div>
+<!-- Modal Eliminar Detalle End -->
 
 <div class="mb-3 card p-3">
     <div class="row">
@@ -97,7 +127,7 @@ ob_start();
         </div>
         <div class="col-sm-3">
             <label for="fecha">Fecha:</label>
-            <input type="date" class="form-control" id="fecha" />
+            <input type="date" class="form-control" id="fecha" value="<?php echo date('Y-m-d'); ?>" />
         </div>
     </div>
     <br>
@@ -143,21 +173,22 @@ ob_start();
         <table id="tabla" class="table">
             <thead>
                 <tr>
-                    <th>ID Factura</th>
-                    <th>Fecha</th>
                     <th>Cliente</th>
+                    <th>Fecha</th>
                     <th>ID Producto</th>
                     <th>Nombre Producto</th>
                     <th>Cantidad</th>
                     <th>Precio Unitario</th>
                     <th>Subtotal</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
                 <tr>
-                    <td colspan="8" class="m-0 px-0 py-2">
-                        <hr>
+                    <td colspan="6" class="text-right font-weight-bold">Total:</td>
+                    <td class="font-weight-bold" id="total-factura">₡0.00</td>
+                    <td class="m-0 px-0 py-2">
                         <button onclick="guardarDatos()" class="btn btn-primary"><i class="fa fa-save"></i> Guardar</button>
                     </td>
                 </tr>
@@ -177,30 +208,42 @@ include './includes/layout.php';
     var tabla;
 
     $(document).ready(function() {
-        // Crear el DataTable que muestra todos los detalles de facturas existentes
+        // Crear el DataTable para mostrar todos los detalles existentes + nuevos locales
         tabla = $('#tabla').DataTable({
-            "processing": true,
-            "serverSide": true,
+            "processing": false,
+            "serverSide": false,
             "lengthChange": false,
-            "searching": true,
+            "searching": false,
             "ajax": {
-                url: "../ajax/factura.php?op=listar_detalles",
-                type: "get",
-                dataType: "json",
-                error: function(e) {
-                    console.log(e.responseText);
+                "url": "../ajax/detalle_factura.php?op=listar_todos_detalles", // Nuevo endpoint
+                "type": "POST",
+                "dataSrc": function(json) {
+                    console.log("Todos los detalles:", json);
+                    return json.aaData || [];
+                },
+                "error": function(xhr, error, thrown) {
+                    console.log("Error en DataTable:", error, thrown);
                 }
             },
+            "columns": [
+                { "title": "Cliente" },
+                { "title": "Fecha" },
+                { "title": "ID Producto" },
+                { "title": "Nombre Producto" },
+                { "title": "Cantidad" },
+                { "title": "Precio Unitario" },
+                { "title": "Subtotal" },
+                { "title": "Acciones", "orderable": false }
+            ],
             "destroy": true,
             "iDisplayLength": 10,
-            "order": [[0, "desc"]],
             "language": {
-                "emptyTable": "No hay detalles de facturas registrados",
-                "info": "Mostrando _START_ a _END_ de _TOTAL_ detalles",
+                "emptyTable": "No hay productos agregados a la factura",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ productos",
                 "loadingRecords": "Cargando...",
                 "processing": "Procesando...",
                 "search": "Buscar:",
-                "zeroRecords": "No se encontraron detalles",
+                "zeroRecords": "No se encontraron productos",
                 "paginate": {
                     "first": "Primero",
                     "last": "Último",
@@ -213,6 +256,12 @@ include './includes/layout.php';
         // Calcular subtotal cuando cambie cantidad o precio
         $('#cantidad, #precioUnitario').on('input', function() {
             calcularSubtotal();
+        });
+
+        // La tabla se carga automáticamente con todos los datos al inicializar
+        // Actualizar total después de cargar
+        tabla.on('xhr.dt', function() {
+            actualizarTotalLocal();
         });
     });
 
@@ -237,19 +286,63 @@ include './includes/layout.php';
         var nombre = $('#nombre').val();
         var cantidad = $('#cantidad').val();
         var precioUnitario = $('#precioUnitario').val();
-        var subtotal = $('#subtotal').val();
+        var cedula = $('#cedula').val();
+        var fecha = $('#fecha').val();
 
         // Validar que los campos de texto no estén vacíos
-        if (idProducto === '' || nombre === '' || cantidad === '' || precioUnitario === '') {
+        if (idProducto === '' || cantidad === '' || precioUnitario === '' || cedula === '' || fecha === '') {
             Swal.fire('Todos los campos son obligatorios.');
             return;
         }
 
-        // Agregar la fila al DataTable
-        tabla.row.add([idProducto, nombre, cantidad, precioUnitario, subtotal]).draw();
+        // Calcular subtotal
+        var subtotal = cantidad * precioUnitario;
 
-        // Limpiar los valores de los cuadros de texto
-        limpiar()
+        // Agregar fila directamente a la tabla (solo local, no a la BD)
+        tabla.row.add([
+            cedula,                                    // Cliente
+            fecha,                                     // Fecha
+            idProducto,                               // ID Producto
+            nombre,                                   // Nombre Producto
+            cantidad,                                 // Cantidad
+            "₡" + Number(precioUnitario).toLocaleString('es-CR', {minimumFractionDigits: 2}), // Precio
+            "₡" + Number(subtotal).toLocaleString('es-CR', {minimumFractionDigits: 2}),       // Subtotal
+            '<button class="btn btn-danger btn-sm" onclick="eliminarFilaLocal(this)"><i class="fa fa-trash"></i></button>' // Acciones
+        ]).draw();
+
+        // Mostrar mensaje de éxito
+        Swal.fire({
+            icon: 'success',
+            title: 'Agregado',
+            text: 'Producto agregado a la tabla (no guardado aún)',
+            timer: 1500,
+            showConfirmButton: false
+        });
+
+        // Limpiar los campos
+        limpiar();
+        
+        // Actualizar total local
+        actualizarTotalLocal();
+    }
+
+    function eliminarFilaLocal(btn) {
+        // Obtener la fila que contiene el botón
+        var fila = $(btn).closest('tr');
+        
+        // Eliminar la fila del DataTable
+        tabla.row(fila).remove().draw();
+        
+        // Actualizar total
+        actualizarTotalLocal();
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Eliminado',
+            text: 'Fila eliminada de la tabla local',
+            timer: 1000,
+            showConfirmButton: false
+        });
     }
 
     function eliminarFila(btn) {
@@ -258,6 +351,93 @@ include './includes/layout.php';
 
         // Eliminar la fila del DataTable
         tabla.row(fila).remove().draw();
+    }
+
+    // Función para mostrar el modal de confirmación (igual que en categoría)
+    function eliminarDetalle(idDetalle) {
+        console.log('Preparando eliminación de detalle con ID:', idDetalle); // Debug
+        // Guardar el ID en el campo oculto
+        $('#modal-detalle-id').val(idDetalle);
+        // Mostrar el modal de confirmación
+        $('#eliminar-detalle-modal').modal('show');
+    }
+
+    // Función que se ejecuta cuando se confirma la eliminación (igual que en categoría)
+    function confirmarEliminarDetalle() {
+        // Obtener el ID del campo oculto
+        var idDetalle = $('#modal-detalle-id').val();
+        console.log('Confirmando eliminación de detalle con ID:', idDetalle); // Debug
+        
+        $.ajax({
+            url: '../ajax/detalle_factura.php?op=eliminar_detalle',
+            type: 'POST',
+            data: {
+                idDetalle: idDetalle
+            },
+            success: function(response) {
+                console.log('Respuesta del servidor:', response); // Debug
+                
+                try {
+                    var resultado = JSON.parse(response);
+                    
+                    if (resultado.status === 'success') {
+                        // Cerrar el modal
+                        $('#eliminar-detalle-modal').modal('hide');
+                        
+                        // Mostrar mensaje de éxito (igual que en categoría)
+                        Swal.fire({
+                            title: 'Resultado',
+                            text: resultado.message,
+                            type: 'success', // Usar 'type' en lugar de 'icon'
+                            confirmButtonText: 'OK'
+                        });
+                        
+                        // Recargar la tabla
+                        tabla.ajax.reload();
+                    } else {
+                        // Mostrar mensaje de error
+                        Swal.fire({
+                            title: 'Error',
+                            text: resultado.message,
+                            type: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                } catch (e) {
+                    // Si la respuesta no es JSON válido
+                    if (response.includes('correctamente')) {
+                        $('#eliminar-detalle-modal').modal('hide');
+                        
+                        Swal.fire({
+                            title: 'Resultado',
+                            text: response,
+                            type: 'success',
+                            confirmButtonText: 'OK'
+                        });
+                        
+                        tabla.ajax.reload();
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Error al procesar la respuesta del servidor',
+                            type: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log('Error AJAX:', textStatus, errorThrown); // Debug
+                console.log('Respuesta completa:', jqXHR.responseText); // Debug
+                
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error al eliminar el producto: ' + textStatus,
+                    type: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
     }
 
     function editarFila(btn) {
@@ -285,40 +465,135 @@ include './includes/layout.php';
     }
 
     function guardarDatos() {
-        // Obtener los datos del DataTable y convertirlos en un objeto JSON
+        // Obtener los datos básicos
         var cedula = $("#cedula").val();
         var nombrecliente = $("#nombrecliente").val();
         var fecha = $("#fecha").val();
-        var detalle = tabla.rows().data().toArray();
 
-        if (cedula == "" || nombrecliente == "" || fecha == "" || detalle.length == 0) {
-            Swal.fire('Faltan Datos');
-            return
+        // Validar campos básicos
+        if (cedula == "" || nombrecliente == "" || fecha == "") {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Datos incompletos',
+                text: 'Por favor complete todos los campos de cliente y fecha'
+            });
+            return;
         }
 
-        var encabezado = {
-            "cedula": cedula,
-            "nombre": nombrecliente,
-            "fecha": fecha
+        // Obtener solo las filas que son nuevas (las que agregamos localmente)
+        // Las filas nuevas tienen botón rojo, las de BD tienen botón amarillo
+        var filasNuevas = [];
+        tabla.rows().every(function(rowIdx, tableLoop, rowLoop) {
+            var data = this.data();
+            if (data && data[7] && data[7].includes('btn-danger')) { // Botón rojo = fila nueva
+                // Extraer valores limpios
+                var precioText = data[5].toString().replace(/[₡,]/g, '');
+                var subtotalText = data[6].toString().replace(/[₡,]/g, '');
+                
+                filasNuevas.push({
+                    idProducto: data[2],
+                    cantidad: data[4],
+                    precioUnitario: parseFloat(precioText),
+                    cedula: data[0],
+                    fecha: data[1]
+                });
+            }
+        });
+
+        if (filasNuevas.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sin productos nuevos',
+                text: 'No hay productos nuevos para guardar'
+            });
+            return;
         }
 
-        // Enviar los datos a un archivo PHP utilizando AJAX
-        $.ajax({
-            url: '../ajax/factura.php',
-            type: 'POST',
-            data: {
-                encabezado: encabezado,
-                detalle: JSON.stringify(detalle)
-            },
-            dataType: 'json',
-            success: function(response) {},
-            error: function(jqXHR, textStatus, errorThrown) {
-                Swal.fire('Datos Insertados');
-                tabla.clear().draw();
-                //Mostramos los valores en las cajas de texto
+        // Guardar cada fila nueva
+        var guardarPromesas = [];
+        filasNuevas.forEach(function(fila) {
+            var promesa = $.ajax({
+                url: '../ajax/detalle_factura.php?op=agregar_detalle',
+                type: 'POST',
+                data: fila,
+                dataType: 'json'
+            });
+            guardarPromesas.push(promesa);
+        });
+
+        // Ejecutar todas las promesas
+        Promise.all(guardarPromesas)
+            .then(function(resultados) {
+                var exitosos = resultados.filter(r => r.status === 'success').length;
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: `Se guardaron ${exitosos} productos correctamente`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Limpiar formulario
                 $('#cedula').val('');
                 $('#nombrecliente').val('');
-                $('#fecha').val('');
+                limpiar();
+                
+                // Recargar la tabla completa
+                tabla.ajax.reload(function() {
+                    actualizarTotalLocal();
+                });
+            })
+            .catch(function(error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al guardar algunos productos'
+                });
+            });
+    }
+
+    function actualizarTotalLocal() {
+        var total = 0;
+        
+        // Recorrer todas las filas de la tabla y sumar los subtotales
+        tabla.rows().every(function(rowIdx, tableLoop, rowLoop) {
+            var data = this.data();
+            if (data && data[6]) { // Columna 6 es el subtotal
+                var subtotalText = data[6].toString();
+                // Extraer el número del texto "₡1,500.00"
+                var subtotal = parseFloat(subtotalText.replace(/[₡,]/g, ''));
+                if (!isNaN(subtotal)) {
+                    total += subtotal;
+                }
+            }
+        });
+        
+        $('#total-factura').text('₡' + total.toLocaleString('es-CR', {minimumFractionDigits: 2}));
+    }
+
+    function actualizarTotal() {
+        var cedula = $("#cedula").val();
+        var fecha = $("#fecha").val();
+        
+        if (cedula === '' || fecha === '') {
+            $('#total-factura').text('₡0.00');
+            return;
+        }
+        
+        $.ajax({
+            url: '../ajax/factura.php?op=obtener_total_temporal',
+            type: 'POST',
+            data: {
+                cedula: cedula,
+                fecha: fecha
+            },
+            dataType: 'json',
+            success: function(response) {
+                $('#total-factura').text('₡' + response.total);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                // Error silencioso - no mostrar en consola
             }
         });
     }
@@ -402,7 +677,7 @@ include './includes/layout.php';
                 type: "get",
                 dataType: "json",
                 error: function(e) {
-                    console.log(e.responseText);
+                    // Error silencioso
                 }
             },
             "bDestroy": true,
@@ -487,11 +762,11 @@ include './includes/layout.php';
                 'pdf'
             ],
             "ajax": {
-                url: "../ajax/cliente.php?op=listar",
+                url: "../ajax/cliente.php?op=listar&select=true",
                 type: "get",
                 dataType: "json",
                 error: function(e) {
-                    console.log(e.responseText);
+                    // Error silencioso
                 }
             },
             "bDestroy": true,
@@ -505,24 +780,20 @@ include './includes/layout.php';
         $('#factura-modal').modal('show')
     }
 
-    function selectCliente(cedula) {
+    function selectCliente(cedula, nombre) {
         var $nombrecliente = document.getElementById('nombrecliente')
         var $cedula = document.getElementById('cedula')
-        var $feedback = document.getElementById('cedula-feedback').innerText = ''
+        var $feedback = document.getElementById('cedula-feedback')
 
-        $.ajax({
-            type: "POST",
-            url: "../ajax/cliente.php?op=mostrar",
-            data: {
-                cedula
-            },
-            success: function(response) {
-                var resultado = JSON.parse(response);
-                $nombrecliente.value = resultado.nombre;
-                $cedula.value = resultado.cedula;
-                $('#factura-modal').modal('hide')
-            }
-        });
+        // Usar directamente el nombre que viene del botón
+        $nombrecliente.value = nombre;
+        $cedula.value = cedula;
+        if ($feedback) $feedback.innerText = '';
+        $('#factura-modal').modal('hide');
+        
+        // Recargar la tabla con los datos del nuevo cliente
+        tabla.ajax.reload();
+        actualizarTotalLocal();
     }
 
     function selectProducto(id) {

@@ -58,7 +58,9 @@ switch ($_GET["op"]) {
                     "1" => $reg->nombre,
                     "2" => $reg->telefono,
                     "3" => $reg->direccion,
-                    "4" => '<button class="btn btn-warning btn-sm" onclick="editar(\'' . $reg->cedula . '\')"><i class="bx bx-pencil"></i>&nbsp;Editar</button> <button class="btn btn-danger btn-sm ml-1" onclick="showModal(\'' . $reg->cedula . '\')"><i class="bx bx-trash"></i>&nbsp;Eliminar</button> <button class="btn btn-info btn-sm ml-1" onclick="verFacturas(\'' . $reg->cedula . '\', \'' . $reg->nombre . '\')"><i class="bx bx-receipt"></i>&nbsp;Facturas</button>'
+                    "4" => isset($_GET["select"]) 
+                        ? '<button class="btn btn-primary" onclick="selectCliente(\'' . $reg->cedula . '\', \'' . addslashes($reg->nombre) . '\')"><i class="bx bx-search"></i>&nbsp;Seleccionar</button>'
+                        : '<button class="btn btn-warning btn-sm" onclick="editar(\'' . $reg->cedula . '\')"><i class="bx bx-pencil"></i>&nbsp;Editar</button> <button class="btn btn-danger btn-sm ml-1" onclick="showModal(\'' . $reg->cedula . '\')"><i class="bx bx-trash"></i>&nbsp;Eliminar</button> <button class="btn btn-info btn-sm ml-1" onclick="verFacturas(\'' . $reg->cedula . '\', \'' . addslashes($reg->nombre) . '\')"><i class="bx bx-receipt"></i>&nbsp;Facturas</button>'
                 );
             }
         }

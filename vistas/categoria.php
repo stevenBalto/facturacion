@@ -1,4 +1,5 @@
 <?php
+require __DIR__ . '/includes/auth_guard.php';
 $title = 'Categoría';
 ob_start();
 ?>

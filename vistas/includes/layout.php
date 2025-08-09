@@ -19,8 +19,6 @@ if (!isset($_SESSION["id"])) {
 </head>
 
 <body>
-    <?php include('encabezado.php'); ?>
-
     <main class="container-fluid">
         <div class="row row-offcanvas row-offcanvas-left">
             <?php include('../vistas/menu.php'); ?>

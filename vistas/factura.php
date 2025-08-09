@@ -1,4 +1,5 @@
-<?php
+<?php 
+require __DIR__ . '/includes/auth_guard.php';
 $title = 'Factura';
 ob_start();
 ?>
@@ -202,17 +203,7 @@ include './includes/layout.php';
             "serverSide": false,
             "lengthChange": false,
             "searching": false,
-            "ajax": {
-                "url": "../ajax/detalle_factura.php?op=listar_todos_detalles", // Nuevo endpoint
-                "type": "POST",
-                "dataSrc": function(json) {
-                    console.log("Todos los detalles:", json);
-                    return json.aaData || [];
-                },
-                "error": function(xhr, error, thrown) {
-                    console.log("Error en DataTable:", error, thrown);
-                }
-            },
+            "data": [], // Inicializar con datos vacíos
             "columns": [
                 { "title": "Cliente" },
                 { "title": "Fecha" },
@@ -245,10 +236,8 @@ include './includes/layout.php';
             calcularSubtotal();
         });
 
-        
-        tabla.on('xhr.dt', function() {
-            actualizarTotalLocal();
-        });
+        // Inicializar el total
+        actualizarTotalLocal();
     });
 
     function calcularSubtotal() {
@@ -259,11 +248,19 @@ include './includes/layout.php';
     }
 
     function limpiar() {
+        // Limpiar campos de producto
         $('#idProducto').val('');
         $('#nombre').val('');
         $('#cantidad').val('');
         $('#precioUnitario').val('');
         $('#subtotal').val('');
+        
+        // Limpiar mensajes de error
+        $('#idProducto-feedback').text('');
+        $('#cantidad_feedback').text('');
+        
+        // Enfocar el cursor en el primer campo
+        $('#idProducto').focus();
     }
 
     function agregarFila() {
@@ -281,7 +278,6 @@ include './includes/layout.php';
 
         var subtotal = cantidad * precioUnitario;
 
-        
         tabla.row.add([
             cedula,                                    
             fecha,                                 
@@ -290,7 +286,7 @@ include './includes/layout.php';
             cantidad,                                
             "₡" + Number(precioUnitario).toLocaleString('es-CR', {minimumFractionDigits: 2}), 
             "₡" + Number(subtotal).toLocaleString('es-CR', {minimumFractionDigits: 2}),       
-            '<button class="btn btn-danger btn-sm" onclick="eliminarFilaLocal(this)"><i class="fa fa-trash"></i></button>' // Acciones
+            '<button class="btn btn-danger btn-sm" onclick="eliminarFilaLocal(this)" data-nuevo="true"><i class="fa fa-trash"></i></button>' // Marcador data-nuevo
         ]).draw();
 
         Swal.fire({
@@ -301,6 +297,7 @@ include './includes/layout.php';
             showConfirmButton: false
         });
 
+    
         limpiar();
         
         actualizarTotalLocal();
@@ -329,14 +326,14 @@ include './includes/layout.php';
     }
 
     function eliminarDetalle(idDetalle) {
-        console.log('Preparando eliminación de detalle con ID:', idDetalle); // Debug
+        console.log('Preparando eliminación de detalle con ID:', idDetalle); 
         $('#modal-detalle-id').val(idDetalle);
         $('#eliminar-detalle-modal').modal('show');
     }
 
     function confirmarEliminarDetalle() {
         var idDetalle = $('#modal-detalle-id').val();
-        console.log('Confirmando eliminación de detalle con ID:', idDetalle); // Debug
+        console.log('Confirmando eliminación de detalle con ID:', idDetalle); 
         
         $.ajax({
             url: '../ajax/detalle_factura.php?op=eliminar_detalle',
@@ -356,16 +353,17 @@ include './includes/layout.php';
                         Swal.fire({
                             title: 'Resultado',
                             text: resultado.message,
-                            type: 'success', 
+                            icon: 'success', 
                             confirmButtonText: 'OK'
                         });
                         
-                        tabla.ajax.reload();
+                    
+                        actualizarTotalLocal();
                     } else {
                         Swal.fire({
                             title: 'Error',
                             text: resultado.message,
-                            type: 'error',
+                            icon: 'error',
                             confirmButtonText: 'OK'
                         });
                     }
@@ -376,16 +374,17 @@ include './includes/layout.php';
                         Swal.fire({
                             title: 'Resultado',
                             text: response,
-                            type: 'success',
+                            icon: 'success',
                             confirmButtonText: 'OK'
                         });
                         
-                        tabla.ajax.reload();
+                        
+                        actualizarTotalLocal();
                     } else {
                         Swal.fire({
                             title: 'Error',
                             text: 'Error al procesar la respuesta del servidor',
-                            type: 'error',
+                            icon: 'error',
                             confirmButtonText: 'OK'
                         });
                     }
@@ -398,7 +397,7 @@ include './includes/layout.php';
                 Swal.fire({
                     title: 'Error',
                     text: 'Error al eliminar el producto: ' + textStatus,
-                    type: 'error',
+                    icon: 'error',
                     confirmButtonText: 'OK'
                 });
             }
@@ -443,17 +442,21 @@ include './includes/layout.php';
         var filasNuevas = [];
         tabla.rows().every(function(rowIdx, tableLoop, rowLoop) {
             var data = this.data();
-            if (data && data[7] && data[7].includes('btn-danger')) { // Botón rojo = fila nueva
-                var precioText = data[5].toString().replace(/[₡,]/g, '');
-                var subtotalText = data[6].toString().replace(/[₡,]/g, '');
+            
+            if (data && data[7] && data[7].includes('data-nuevo="true"')) {
+                var precioText = data[5].toString().replace(/[^\d.-]/g, '');
+                var subtotalText = data[6].toString().replace(/[^\d.-]/g, '');
                 
-                filasNuevas.push({
+                var filaData = {
                     idProducto: data[2],
                     cantidad: data[4],
                     precioUnitario: parseFloat(precioText),
                     cedula: data[0],
                     fecha: data[1]
-                });
+                };
+                
+                console.log('Fila a guardar:', filaData); 
+                filasNuevas.push(filaData);
             }
         });
 
@@ -468,40 +471,54 @@ include './includes/layout.php';
 
         var guardarPromesas = [];
         filasNuevas.forEach(function(fila) {
+            console.log('Enviando datos:', fila); 
             var promesa = $.ajax({
                 url: '../ajax/detalle_factura.php?op=agregar_detalle',
                 type: 'POST',
                 data: fila,
                 dataType: 'json'
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Error en AJAX:', textStatus, errorThrown);
+                console.error('Respuesta del servidor:', jqXHR.responseText);
             });
             guardarPromesas.push(promesa);
         });
 
         Promise.all(guardarPromesas)
             .then(function(resultados) {
-                var exitosos = resultados.filter(r => r.status === 'success').length;
+                console.log('Resultados recibidos:', resultados); 
+                var exitosos = resultados.filter(r => r && r.status === 'success').length;
                 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Éxito',
-                    text: `Se guardaron ${exitosos} productos correctamente`,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-                $('#cedula').val('');
-                $('#nombrecliente').val('');
-                limpiar();
-                
-                tabla.ajax.reload(function() {
+                if (exitosos > 0) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Éxito',
+                        text: `Se guardaron ${exitosos} productos correctamente`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    $('#cedula').val('');
+                    $('#nombrecliente').val('');
+                    limpiar();
+                    
+                    
+                    tabla.clear().draw();
                     actualizarTotalLocal();
-                });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudieron guardar los productos. Revisa la consola para más detalles.'
+                    });
+                }
             })
             .catch(function(error) {
+                console.error('Error en Promise.all:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Error al guardar algunos productos'
+                    text: 'Error al guardar los productos. Revisa la consola del navegador para más detalles.'
                 });
             });
     }
@@ -511,15 +528,29 @@ include './includes/layout.php';
         
         tabla.rows().every(function(rowIdx, tableLoop, rowLoop) {
             var data = this.data();
-            if (data && data[6]) { 
+            if (data && data.length > 6 && data[6]) { 
                 var subtotalText = data[6].toString();
-                var subtotal = parseFloat(subtotalText.replace(/[₡,]/g, ''));
+                
+                
+                var sinMoneda = subtotalText.replace('₡', '');
+                
+              
+                var sinEspacios = sinMoneda.replace(/\s/g, '');
+                
+             
+                var conPunto = sinEspacios.replace(',', '.');
+                
+                var subtotal = parseFloat(conPunto);
+                
+                console.log('Subtotal original:', subtotalText, '-> Sin moneda:', sinMoneda, '-> Sin espacios:', sinEspacios, '-> Con punto:', conPunto, '-> Parseado:', subtotal); // Debug
+                
                 if (!isNaN(subtotal)) {
                     total += subtotal;
                 }
             }
         });
         
+        console.log('Total calculado:', total); 
         $('#total-factura').text('₡' + total.toLocaleString('es-CR', {minimumFractionDigits: 2}));
     }
 
@@ -737,7 +768,7 @@ include './includes/layout.php';
         if ($feedback) $feedback.innerText = '';
         $('#factura-modal').modal('hide');
         
-        tabla.ajax.reload();
+        // Solo actualizar el total local
         actualizarTotalLocal();
     }
 

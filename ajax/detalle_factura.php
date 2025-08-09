@@ -44,31 +44,59 @@ switch ($_GET["op"]) {
         break;
 
     case 'agregar_detalle':
+        // Log de datos recibidos
+        error_log("Datos recibidos: " . print_r($_POST, true));
+        
         $idProducto = isset($_POST["idProducto"]) ? limpiarCadena($_POST["idProducto"]) : "";
         $cantidad = isset($_POST["cantidad"]) ? limpiarCadena($_POST["cantidad"]) : "";
         $precioUnitario = isset($_POST["precioUnitario"]) ? limpiarCadena($_POST["precioUnitario"]) : "";
         $cedula = isset($_POST["cedula"]) ? limpiarCadena($_POST["cedula"]) : "";
         $fecha = isset($_POST["fecha"]) ? limpiarCadena($_POST["fecha"]) : "";
         
+        // Validar datos obligatorios
+        if (empty($idProducto) || empty($cantidad) || empty($precioUnitario) || empty($cedula) || empty($fecha)) {
+            echo json_encode(array("status" => "error", "message" => "Faltan datos obligatorios"));
+            break;
+        }
+        
         $subtotal = $cantidad * $precioUnitario;
         $fechaformato = date('Y-m-d', strtotime($fecha));
         
-        $sql_verificar = "SELECT id FROM factura WHERE cedulaCliente = '$cedula' AND fecha = '$fechaformato' AND estado = 'temporal'";
+        error_log("Fecha original: $fecha, Fecha formateada: $fechaformato");
+        
+        $sql_verificar = "SELECT id FROM factura WHERE cedulaCliente = '$cedula' AND fecha = '$fechaformato'";
         $resultado = ejecutarConsulta($sql_verificar);
         
         if ($resultado && $resultado->num_rows > 0) {
             $factura_temp = $resultado->fetch_object();
             $idfactura = $factura_temp->id;
+            error_log("Factura encontrada: $idfactura");
         } else {
-            $sql_factura = "INSERT INTO factura (cedulaCliente, fecha, total, estado) VALUES ('$cedula', '$fechaformato', 0, 'temporal')";
-            ejecutarConsulta($sql_factura);
+            $sql_factura = "INSERT INTO factura (cedulaCliente, fecha, total) VALUES ('$cedula', '$fechaformato', 0)";
+            $resultado_factura = ejecutarConsulta($sql_factura);
+            if (!$resultado_factura) {
+                error_log("Error al crear factura: " . mysqli_error($GLOBALS['conexion']));
+                echo json_encode(array("status" => "error", "message" => "Error al crear factura"));
+                break;
+            }
             $idfactura = ejecutarConsulta("SELECT LAST_INSERT_ID() as id")->fetch_object()->id;
+            error_log("Nueva factura creada: $idfactura");
         }
         
         $rspta = $factura->insertarDetalle($idProducto, '', $precioUnitario, $cantidad, $subtotal, $idfactura);
         
+        if (!$rspta) {
+            error_log("Error al insertar detalle: " . mysqli_error($GLOBALS['conexion']));
+            echo json_encode(array("status" => "error", "message" => "Error al insertar detalle de producto"));
+            break;
+        }
+        
         $sql_total = "UPDATE factura SET total = (SELECT SUM(subtotal) FROM detalle_factura WHERE idFactura = $idfactura) WHERE id = $idfactura";
-        ejecutarConsulta($sql_total);
+        $resultado_total = ejecutarConsulta($sql_total);
+        
+        if (!$resultado_total) {
+            error_log("Error al actualizar total: " . mysqli_error($GLOBALS['conexion']));
+        }
         
         if ($rspta) {
             echo json_encode(array("status" => "success", "message" => "Producto agregado correctamente"));
@@ -86,7 +114,7 @@ switch ($_GET["op"]) {
                 FROM detalle_factura d 
                 INNER JOIN factura f ON d.idFactura = f.id 
                 INNER JOIN producto p ON d.idProducto = p.id
-                WHERE f.cedulaCliente = '$cedula' AND f.fecha = '$fechaformato' AND f.estado = 'temporal'
+                WHERE f.cedulaCliente = '$cedula' AND f.fecha = '$fechaformato'
                 ORDER BY d.id DESC";
         
         $rspta = ejecutarConsulta($sql);

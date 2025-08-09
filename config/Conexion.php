@@ -43,4 +43,23 @@ if (!function_exists('ejecutarConsulta'))
 		return htmlspecialchars($str);
 	}
 }
+
+// Clase adicional para PDO
+class Conexion {
+    private static $pdo = null;
+    
+    public static function getConexion() {
+        if (self::$pdo === null) {
+            try {
+                $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8";
+                self::$pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD);
+                self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            } catch (PDOException $e) {
+                error_log("Error de conexión PDO: " . $e->getMessage());
+                throw $e;
+            }
+        }
+        return self::$pdo;
+    }
+}
 ?>

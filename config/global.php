@@ -1,4 +1,7 @@
 <?php
+// Iniciar sesión si no está activa
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 //Ip de la pc servidor de base de datos
 define("DB_HOST", "localhost");
 

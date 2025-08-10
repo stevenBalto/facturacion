@@ -72,4 +72,32 @@ class Cliente
             return false;
         }
     }
+
+
+    public function consultar($campo, $dato)
+    {
+        // En cliente, claves válidas
+        $permitidos = ['cedula', 'nombre'];
+        if (!in_array($campo, $permitidos, true)) {
+            $sql = "SELECT cedula, nombre, telefono, direccion FROM cliente WHERE 1=0";
+            return ejecutarConsulta($sql);
+        }
+
+        if ($campo === 'nombre') {
+            $sql = "SELECT cedula, nombre, telefono, direccion
+                    FROM cliente
+                    WHERE nombre LIKE '%$dato%'";
+        } else { // cedula
+            $sql = "SELECT cedula, nombre, telefono, direccion
+                    FROM cliente
+                    WHERE cedula = '$dato'";
+        }
+        return ejecutarConsulta($sql);
+    }
+    public function contarClientes()
+    {
+        $sql = "SELECT COUNT(*) AS total FROM cliente";
+        return ejecutarConsultaSimpleFila($sql);
+    }
+
 }

@@ -8,10 +8,12 @@ $cedula = isset($_POST["cedula"]) ? limpiarCadena($_POST["cedula"]) : "";
 $nombre = isset($_POST["nombre"]) ? limpiarCadena($_POST["nombre"]) : "";
 $telefono = isset($_POST["telefono"]) ? limpiarCadena($_POST["telefono"]) : "";
 $direccion = isset($_POST["direccion"]) ? limpiarCadena($_POST["direccion"]) : "";
+$campo = $_POST["campo"] ?? "";
+$dato = $_POST["dato"] ?? "";
 
 switch ($_GET["op"]) {
     case 'guardar':
-        if(empty($cedula) || empty($nombre) || empty($telefono) || empty($direccion)) {
+        if (empty($cedula) || empty($nombre) || empty($telefono) || empty($direccion)) {
             echo "Todos los campos son requeridos (cédula, nombre, teléfono y dirección)";
         } else {
             $rspta = $cliente->insertar($cedula, $nombre, $telefono, $direccion);
@@ -24,7 +26,7 @@ switch ($_GET["op"]) {
         break;
 
     case 'editar':
-        if(empty($cedula) || empty($nombre) || empty($telefono) || empty($direccion)) {
+        if (empty($cedula) || empty($nombre) || empty($telefono) || empty($direccion)) {
             echo "Todos los campos son requeridos (cédula, nombre, teléfono y dirección)";
         } else {
             $rspta = $cliente->editar($cedula, $nombre, $telefono, $direccion);
@@ -39,36 +41,47 @@ switch ($_GET["op"]) {
 
     case 'mostrar':
         $rspta = $cliente->mostrar($cedula);
-        if($rspta) {
-            
+        if ($rspta) {
+
             echo json_encode($rspta);
         } else {
             echo json_encode(array("error" => "No se encontró el cliente"));
         }
         break;
 
+    case 'consultar':
+        $rspta = $cliente->consultar($campo, $dato);
+        echo json_encode($rspta->fetch_all(MYSQLI_ASSOC));
+        break;
+
+    case 'contar':
+        $fila = $cliente->contarClientes();
+        echo json_encode($fila); 
+        break;
+
+
     case 'listar':
         $rspta = $cliente->listar();
         $data = array();
 
-        if($rspta) {
+        if ($rspta) {
             while ($reg = $rspta->fetch_object()) {
                 $data[] = array(
                     "0" => $reg->cedula,
                     "1" => $reg->nombre,
                     "2" => $reg->telefono,
                     "3" => $reg->direccion,
-                    "4" => isset($_GET["select"]) 
+                    "4" => isset($_GET["select"])
                         ? '<button class="btn btn-primary" onclick="selectCliente(\'' . $reg->cedula . '\', \'' . addslashes($reg->nombre) . '\')"><i class="bx bx-search"></i>&nbsp;Seleccionar</button>'
                         : '<button class="btn btn-warning btn-sm" onclick="editar(\'' . $reg->cedula . '\')"><i class="bx bx-pencil"></i>&nbsp;Editar</button> <button class="btn btn-danger btn-sm ml-1" onclick="showModal(\'' . $reg->cedula . '\')"><i class="bx bx-trash"></i>&nbsp;Eliminar</button> <button class="btn btn-info btn-sm ml-1" onclick="verFacturas(\'' . $reg->cedula . '\', \'' . addslashes($reg->nombre) . '\')"><i class="bx bx-receipt"></i>&nbsp;Facturas</button>'
                 );
             }
         }
-        
+
         $results = array(
-            "sEcho" => 1, 
-            "iTotalRecords" => count($data), 
-            "iTotalDisplayRecords" => count($data), 
+            "sEcho" => 1,
+            "iTotalRecords" => count($data),
+            "iTotalDisplayRecords" => count($data),
             "aaData" => $data
         );
         echo json_encode($results);
@@ -78,5 +91,5 @@ switch ($_GET["op"]) {
         $rspta = $cliente->buscar($cedula);
 
         echo json_encode($rspta);
-        break;
+                break;
 }

@@ -6,6 +6,8 @@ $categoria = new Categoria();
 
 $id = isset($_POST["id"]) ? limpiarCadena($_POST["id"]) : "";
 $nombre = isset($_POST["nombre"]) ? limpiarCadena($_POST["nombre"]) : "";
+$campo = $_POST["campo"] ?? "";
+$dato  = $_POST["dato"]  ?? "";
 
 switch ($_GET["op"]) {
 	case 'guardar':
@@ -40,6 +42,11 @@ switch ($_GET["op"]) {
     $rspta = $categoria->mostrar($id);
     echo json_encode($rspta);
     break;
+	
+    case 'consultar':
+        $rspta = $categoria->consultar($campo, $dato);
+        echo json_encode($rspta->fetch_all(MYSQLI_ASSOC));
+        break;
 
 	case 'listar':
 		$rspta = $categoria->listar();
@@ -64,4 +71,6 @@ switch ($_GET["op"]) {
 		);
 		echo json_encode($results);
 		break;
+
+		
 }

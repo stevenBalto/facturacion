@@ -62,6 +62,24 @@ Class Categoria
 			return false;
 		}
 	}
+	 public function consultar($campo, $dato) {
+        // Whitelist de columnas válidas
+        $permitidos = ['id','nombre'];
+        if (!in_array($campo, $permitidos, true)) {
+            // campo inválido → sin resultados
+            $sql = "SELECT id, nombre FROM categoria WHERE 1=0";
+            return ejecutarConsulta($sql);
+        }
+
+        if ($campo === 'nombre') {
+            $sql = "SELECT id, nombre FROM categoria
+                    WHERE nombre LIKE '%$dato%'";
+        } else { // id
+            $sql = "SELECT id, nombre FROM categoria
+                    WHERE id = '$dato'";
+        }
+        return ejecutarConsulta($sql);
+    }
 }
 
 ?>

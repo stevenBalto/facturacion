@@ -196,6 +196,34 @@ include './includes/layout.php';
 
 <script>
     var tabla;
+    // Índice de la fila que se está editando actualmente (null si no hay edición)
+    var filaEditandoIndex = null;
+
+    // Utilidad: parsear moneda formateada en es-CR (p. ej. "₡2 750,00" o "₡2.750,00") a número JS
+    function parseCRCurrency(value) {
+        if (value === null || value === undefined) return 0;
+        let str = value.toString();
+        // quitar símbolo y espacios (incluyendo NBSP y espacios finos)
+        str = str.replace(/₡/g, '').replace(/[\s\u00A0\u202F]/g, '');
+        // quitar separadores de miles y normalizar coma decimal a punto
+        str = str.replace(/\./g, '').replace(/,/g, '.');
+        const n = parseFloat(str);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function setEditMode(index) {
+        filaEditandoIndex = index;
+        const $btn = $('#agregarFila');
+        $btn.removeClass('btn-success').addClass('btn-warning');
+        $btn.html('<i class="fa fa-save"></i> Actualizar');
+    }
+
+    function resetEditMode() {
+        filaEditandoIndex = null;
+        const $btn = $('#agregarFila');
+        $btn.removeClass('btn-warning').addClass('btn-success');
+        $btn.html('<i class="fa fa-plus"></i> Agregar');
+    }
 
     $(document).ready(function() {
         tabla = $('#tabla').DataTable({
@@ -276,35 +304,68 @@ include './includes/layout.php';
             return;
         }
 
-        var subtotal = cantidad * precioUnitario;
+        var subtotal = Number(cantidad) * Number(precioUnitario);
 
-        tabla.row.add([
-            cedula,                                    
-            fecha,                                 
-            idProducto,                               
-            nombre,                                  
-            cantidad,                                
-            "₡" + Number(precioUnitario).toLocaleString('es-CR', {minimumFractionDigits: 2}), 
-            "₡" + Number(subtotal).toLocaleString('es-CR', {minimumFractionDigits: 2}),       
-            '<button class="btn btn-danger btn-sm" onclick="eliminarFilaLocal(this)" data-nuevo="true"><i class="fa fa-trash"></i></button>' // Marcador data-nuevo
-        ]).draw();
+        var accionesHtml = '' +
+            '<button class="btn btn-warning btn-sm mr-2" onclick="editarFilaLocal(this)" title="Editar"><i class="fa fa-edit"></i></button>' +
+            '<button class="btn btn-danger btn-sm" onclick="eliminarFilaLocal(this)" data-nuevo="true" title="Eliminar"><i class="fa fa-trash"></i></button>';
 
-        Swal.fire({
-            icon: 'success',
-            title: 'Agregado',
-            text: 'Producto agregado a la tabla (no guardado aún)',
-            timer: 1500,
-            showConfirmButton: false
-        });
+        if (filaEditandoIndex !== null) {
+            // Actualizar la fila existente
+            tabla.row(filaEditandoIndex).data([
+                cedula,
+                fecha,
+                idProducto,
+                nombre,
+                cantidad,
+                '₡' + Number(precioUnitario).toLocaleString('es-CR', { minimumFractionDigits: 2 }),
+                '₡' + Number(subtotal).toLocaleString('es-CR', { minimumFractionDigits: 2 }),
+                accionesHtml
+            ]).draw(false);
 
-    
+            Swal.fire({
+                icon: 'success',
+                title: 'Actualizado',
+                text: 'La fila fue actualizada',
+                timer: 1200,
+                showConfirmButton: false
+            });
+
+            resetEditMode();
+        } else {
+            // Agregar nueva fila
+            tabla.row.add([
+                cedula,
+                fecha,
+                idProducto,
+                nombre,
+                cantidad,
+                '₡' + Number(precioUnitario).toLocaleString('es-CR', { minimumFractionDigits: 2 }),
+                '₡' + Number(subtotal).toLocaleString('es-CR', { minimumFractionDigits: 2 }),
+                accionesHtml
+            ]).draw(false);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Agregado',
+                text: 'Producto agregado a la tabla (no guardado aún)',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+
         limpiar();
-        
         actualizarTotalLocal();
     }
 
     function eliminarFilaLocal(btn) {
         var fila = $(btn).closest('tr');
+        var idx = tabla.row(fila).index();
+        // Si estamos eliminando la fila que está en edición, salir del modo edición
+        if (filaEditandoIndex === idx) {
+            resetEditMode();
+            limpiar();
+        }
         
         tabla.row(fila).remove().draw();
         
@@ -404,24 +465,24 @@ include './includes/layout.php';
         });
     }
 
-    function editarFila(btn) {
-
+    // Cargar datos de una fila en los campos superiores y activar modo edición
+    function editarFilaLocal(btn) {
         var fila = $(btn).closest('tr');
+        var idx = tabla.row(fila).index();
+        var data = tabla.row(fila).data();
 
-        var idProducto = tabla.cell(fila, 0).data();
-        var nombre = tabla.cell(fila, 1).data();
-        var cantidad = tabla.cell(fila, 2).data();
-        var precioUnitario = tabla.cell(fila, 3).data();
-        var subtotal = tabla.cell(fila, 4).data();
+        // data: [cedula, fecha, idProducto, nombre, cantidad, precioUnitarioFmt, subtotalFmt, acciones]
+        $('#cedula').val(data[0]);
+        $('#fecha').val(data[1]);
+        $('#idProducto').val(data[2]);
+        $('#nombre').val(data[3]);
+        $('#cantidad').val(data[4]);
+        $('#precioUnitario').val(parseCRCurrency(data[5]));
+        calcularSubtotal();
 
-        $('#idProducto').val(idProducto);
-        $('#nombre').val(nombre);
-        $('#cantidad').val(cantidad);
-        $('#precioUnitario').val(precioUnitario);
-        $('#subtotal').val(subtotal);
-
-        tabla.row(fila).remove().draw();
-
+        setEditMode(idx);
+        // Enfocar primer campo de edición
+        $('#idProducto').focus();
     }
 
     function guardarDatos() {
@@ -525,33 +586,13 @@ include './includes/layout.php';
 
     function actualizarTotalLocal() {
         var total = 0;
-        
-        tabla.rows().every(function(rowIdx, tableLoop, rowLoop) {
+        tabla.rows().every(function() {
             var data = this.data();
-            if (data && data.length > 6 && data[6]) { 
-                var subtotalText = data[6].toString();
-                
-                
-                var sinMoneda = subtotalText.replace('₡', '');
-                
-              
-                var sinEspacios = sinMoneda.replace(/\s/g, '');
-                
-             
-                var conPunto = sinEspacios.replace(',', '.');
-                
-                var subtotal = parseFloat(conPunto);
-                
-                console.log('Subtotal original:', subtotalText, '-> Sin moneda:', sinMoneda, '-> Sin espacios:', sinEspacios, '-> Con punto:', conPunto, '-> Parseado:', subtotal); // Debug
-                
-                if (!isNaN(subtotal)) {
-                    total += subtotal;
-                }
+            if (data && data.length > 6) {
+                total += parseCRCurrency(data[6]);
             }
         });
-        
-        console.log('Total calculado:', total); 
-        $('#total-factura').text('₡' + total.toLocaleString('es-CR', {minimumFractionDigits: 2}));
+        $('#total-factura').text('₡' + total.toLocaleString('es-CR', { minimumFractionDigits: 2 }));
     }
 
     function actualizarTotal() {
